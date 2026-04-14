@@ -990,3 +990,213 @@ export function search(query, options = {}) {
 
   return _getDb().prepare(sql).all(...params);
 }
+
+/**
+ * Returns all entities ordered by id ASC.
+ *
+ * @returns {{ id: number, name: string, type: string, metadata: Object, created_at: string, updated_at: string }[]}
+ */
+export function getAllEntities() {
+  return _getDb()
+    .prepare('SELECT * FROM entities ORDER BY id ASC')
+    .all()
+    .map((row) => ({ ...row, metadata: JSON.parse(row.metadata) }));
+}
+
+/**
+ * Returns all relations ordered by id ASC.
+ *
+ * @returns {{ id: number, source_id: number, target_id: number, type: string, metadata: Object, created_at: string }[]}
+ */
+export function getAllRelations() {
+  return _getDb()
+    .prepare('SELECT * FROM relations ORDER BY id ASC')
+    .all()
+    .map((row) => ({ ...row, metadata: JSON.parse(row.metadata) }));
+}
+
+/**
+ * Returns all data sources ordered by id ASC.
+ *
+ * @returns {{ id: number, name: string, type: string, config: Object, is_active: number, created_at: string, updated_at: string }[]}
+ */
+export function getAllDataSources() {
+  return _getDb()
+    .prepare('SELECT * FROM data_sources ORDER BY id ASC')
+    .all()
+    .map((row) => ({ ...row, config: JSON.parse(row.config) }));
+}
+
+/**
+ * Returns all health metrics ordered by id ASC.
+ *
+ * @returns {{ id: number, source_id: number, metric_type: string, value: number, unit: string, metadata: Object, recorded_at: string, created_at: string }[]}
+ */
+export function getAllHealthMetrics() {
+  return _getDb()
+    .prepare('SELECT * FROM health_metrics ORDER BY id ASC')
+    .all()
+    .map((row) => ({ ...row, metadata: JSON.parse(row.metadata) }));
+}
+
+/**
+ * Returns all activities ordered by id ASC.
+ *
+ * @returns {{ id: number, source_id: number, activity_type: string, duration_minutes: number|null, intensity: string|null, metadata: Object, recorded_at: string, created_at: string }[]}
+ */
+export function getAllActivities() {
+  return _getDb()
+    .prepare('SELECT * FROM activities ORDER BY id ASC')
+    .all()
+    .map((row) => ({ ...row, metadata: JSON.parse(row.metadata) }));
+}
+
+/**
+ * Returns all grades ordered by id ASC.
+ *
+ * @returns {{ id: number, source_id: number, subject: string, score: number, scale: string|null, metadata: Object, recorded_at: string, created_at: string }[]}
+ */
+export function getAllGrades() {
+  return _getDb()
+    .prepare('SELECT * FROM grades ORDER BY id ASC')
+    .all()
+    .map((row) => ({ ...row, metadata: JSON.parse(row.metadata) }));
+}
+
+/**
+ * Returns all meals ordered by id ASC.
+ *
+ * @returns {{ id: number, source_id: number, meal_type: string, items: Array, nutrition: Object, metadata: Object, recorded_at: string, created_at: string }[]}
+ */
+export function getAllMeals() {
+  return _getDb()
+    .prepare('SELECT * FROM meals ORDER BY id ASC')
+    .all()
+    .map((row) => _parseJsonFields(row, 'items', 'nutrition', 'metadata'));
+}
+
+/**
+ * Returns all embeddings ordered by entity_id ASC.
+ *
+ * @returns {{ entity_id: number, embedding: Float32Array }[]}
+ */
+export function getAllEmbeddings() {
+  return _getDb()
+    .prepare('SELECT entity_id, embedding FROM vec_embeddings ORDER BY entity_id ASC')
+    .all()
+    .map((row) => ({
+      entity_id: Number(row.entity_id),
+      embedding: new Float32Array(row.embedding.buffer, row.embedding.byteOffset, row.embedding.byteLength / 4),
+    }));
+}
+
+/**
+ * Returns row counts for all exportable tables.
+ *
+ * @returns {{ data_sources: number, entities: number, relations: number, health_metrics: number, activities: number, grades: number, meals: number, embeddings: number }}
+ */
+export function getRecordCounts() {
+  const db = _getDb();
+  const count = (table) => db.prepare(`SELECT COUNT(*) AS c FROM ${table}`).get().c;
+
+  return {
+    activities: count('activities'),
+    data_sources: count('data_sources'),
+    embeddings: count('vec_embeddings'),
+    entities: count('entities'),
+    grades: count('grades'),
+    health_metrics: count('health_metrics'),
+    meals: count('meals'),
+    relations: count('relations'),
+  };
+}
+
+/**
+ * Imports an entity with explicit id and timestamps. Bypasses name/type validation.
+ *
+ * @param {{ id: number, name: string, type: string, metadata: Object, created_at: string, updated_at: string }} row
+ */
+export function importEntity(row) {
+  _getDb()
+    .prepare('INSERT INTO entities (id, name, type, metadata, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)')
+    .run(row.id, row.name, row.type, JSON.stringify(row.metadata), row.created_at, row.updated_at);
+}
+
+/**
+ * Imports a relation with explicit id and timestamps.
+ *
+ * @param {{ id: number, source_id: number, target_id: number, type: string, metadata: Object, created_at: string }} row
+ */
+export function importRelation(row) {
+  _getDb()
+    .prepare('INSERT INTO relations (id, source_id, target_id, type, metadata, created_at) VALUES (?, ?, ?, ?, ?, ?)')
+    .run(row.id, row.source_id, row.target_id, row.type, JSON.stringify(row.metadata), row.created_at);
+}
+
+/**
+ * Imports a data source with explicit id and timestamps.
+ *
+ * @param {{ id: number, name: string, type: string, config: Object, is_active: number, created_at: string, updated_at: string }} row
+ */
+export function importDataSource(row) {
+  _getDb()
+    .prepare('INSERT INTO data_sources (id, name, type, config, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
+    .run(row.id, row.name, row.type, JSON.stringify(row.config), row.is_active, row.created_at, row.updated_at);
+}
+
+/**
+ * Imports a health metric with explicit id and timestamps.
+ *
+ * @param {{ id: number, source_id: number, metric_type: string, value: number, unit: string, metadata: Object, recorded_at: string, created_at: string }} row
+ */
+export function importHealthMetric(row) {
+  _getDb()
+    .prepare('INSERT INTO health_metrics (id, source_id, metric_type, value, unit, metadata, recorded_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+    .run(row.id, row.source_id, row.metric_type, row.value, row.unit, JSON.stringify(row.metadata), row.recorded_at, row.created_at);
+}
+
+/**
+ * Imports an activity with explicit id and timestamps.
+ *
+ * @param {{ id: number, source_id: number, activity_type: string, duration_minutes: number|null, intensity: string|null, metadata: Object, recorded_at: string, created_at: string }} row
+ */
+export function importActivity(row) {
+  _getDb()
+    .prepare('INSERT INTO activities (id, source_id, activity_type, duration_minutes, intensity, metadata, recorded_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+    .run(row.id, row.source_id, row.activity_type, row.duration_minutes, row.intensity, JSON.stringify(row.metadata), row.recorded_at, row.created_at);
+}
+
+/**
+ * Imports a grade with explicit id and timestamps.
+ *
+ * @param {{ id: number, source_id: number, subject: string, score: number, scale: string|null, metadata: Object, recorded_at: string, created_at: string }} row
+ */
+export function importGrade(row) {
+  _getDb()
+    .prepare('INSERT INTO grades (id, source_id, subject, score, scale, metadata, recorded_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+    .run(row.id, row.source_id, row.subject, row.score, row.scale, JSON.stringify(row.metadata), row.recorded_at, row.created_at);
+}
+
+/**
+ * Imports a meal with explicit id and timestamps.
+ *
+ * @param {{ id: number, source_id: number, meal_type: string, items: Array, nutrition: Object, metadata: Object, recorded_at: string, created_at: string }} row
+ */
+export function importMeal(row) {
+  _getDb()
+    .prepare('INSERT INTO meals (id, source_id, meal_type, items, nutrition, metadata, recorded_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+    .run(row.id, row.source_id, row.meal_type, JSON.stringify(row.items), JSON.stringify(row.nutrition), JSON.stringify(row.metadata), row.recorded_at, row.created_at);
+}
+
+/**
+ * Wraps a callback in a SQLite transaction. The entire callback runs
+ * atomically — if any statement throws, all changes are rolled back.
+ *
+ * @param {Function} fn - Callback containing database operations.
+ * @returns {*} Return value of fn.
+ * @throws {Error} If database not initialized or fn throws.
+ */
+export function runTransaction(fn) {
+  const transaction = _getDb().transaction(fn);
+  return transaction();
+}
