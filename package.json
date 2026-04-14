@@ -1,0 +1,26 @@
+{
+  "name": "openclaw-kb",
+  "version": "1.0.0",
+  "description": "SQLite database abstraction layer for OpenClaw knowledge base",
+  "main": "src/db.mjs",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@mozilla/readability": "^0.6.0",
+    "better-sqlite3": "^12.9.0",
+    "gray-matter": "^4.0.3",
+    "jsdom": "^29.0.2",
+    "sqlite-vec": "^0.1.9",
+    "turndown": "^7.2.4",
+    "turndown-plugin-gfm": "^1.0.2",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.4"
+  }
+}

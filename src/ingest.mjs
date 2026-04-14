@@ -1,0 +1,354 @@
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import matter from 'gray-matter';
+import yaml from 'js-yaml';
+import { fetchUrl } from './fetcher.mjs';
+import { extract } from './extractor.mjs';
+import {
+  slugify,
+  rawFileName as generateRawFileName,
+  createPage,
+  updatePage,
+  findPage,
+  regenerateIndex,
+  appendLog,
+} from './wiki.mjs';
+import { createRelation, createEntity, getEntity } from './db.mjs';
+
+/** gray-matter options with JSON_SCHEMA engine for date safety. */
+const MATTER_OPTIONS = {
+  engines: {
+    yaml: {
+      parse: (str) => yaml.load(str, { schema: yaml.JSON_SCHEMA }),
+      stringify: (obj) => yaml.dump(obj, { lineWidth: -1, schema: yaml.JSON_SCHEMA }),
+    },
+  },
+};
+
+/**
+ * Archives raw source content to the raw/ directory.
+ *
+ * @param {Object} params
+ * @param {string} params.title - Source document title.
+ * @param {string} params.content - Markdown content.
+ * @param {string} params.source - URL or "manual".
+ * @param {string|null} [params.author] - Author name.
+ * @param {string[]} [params.tags] - Classification tags.
+ * @param {Object} [options]
+ * @param {string} [options.rawDir='raw'] - Raw directory path.
+ * @returns {{ fileName: string, filePath: string }}
+ */
+function archiveRawSource({ title, content, source, author, tags = [] }, options = {}) {
+  const rawDir = options.rawDir || 'raw';
+  mkdirSync(rawDir, { recursive: true });
+
+  const now = new Date();
+  const fileName = generateRawFileName(title, now, { rawDir });
+
+  const frontmatter = {
+    title,
+    source,
+    date: now.toISOString(),
+    tags,
+  };
+
+  if (author) {
+    frontmatter.author = author;
+  }
+
+  const body = `\n${content}\n`;
+  const output = matter.stringify(body, frontmatter, MATTER_OPTIONS);
+  const filePath = join(rawDir, fileName);
+  writeFileSync(filePath, output, 'utf8');
+
+  return { fileName, filePath };
+}
+
+/**
+ * Fetches a URL, archives the raw content, extracts entities/concepts via LLM,
+ * creates/updates wiki pages and KG entities, regenerates the index, and appends to the log.
+ *
+ * @param {string} url - URL to fetch and ingest. Must be a valid HTTP/HTTPS URL.
+ * @param {import('./extractor.mjs').LLMProvider} llm - Provider-agnostic LLM interface.
+ * @param {Object} [options]
+ * @param {string} [options.wikiDir='wiki'] - Root directory for wiki pages.
+ * @param {string} [options.rawDir='raw'] - Root directory for raw source files.
+ * @param {number} [options.fetchTimeout=15000] - URL fetch timeout in milliseconds.
+ * @returns {Promise<{ ok: boolean, rawFile: string, pagesCreated: string[], pagesUpdated: string[], pagesFailed: { name: string, error: string }[], entitiesCreated: number, relationsCreated: number }>}
+ * @throws {Error} If URL is invalid or fetch fails.
+ */
+export async function ingestUrl(url, llm, options = {}) {
+  const wikiDir = options.wikiDir || 'wiki';
+  const rawDir = options.rawDir || 'raw';
+  const fetchTimeout = options.fetchTimeout || 15000;
+
+  // Validate URL
+  let parsedUrl;
+  try {
+    parsedUrl = new URL(url);
+  } catch {
+    throw new Error(`Invalid URL: ${url}`);
+  }
+
+  if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+    throw new Error(`Invalid URL: ${url}`);
+  }
+
+  // Ensure directories exist
+  _ensureWikiDirs(wikiDir);
+  mkdirSync(rawDir, { recursive: true });
+
+  // Fetch content — on failure, halt entirely (FR-015)
+  const fetchResult = await fetchUrl(url, { timeout: fetchTimeout });
+
+  // Archive raw source (T016)
+  const rawSource = archiveRawSource({
+    title: fetchResult.title,
+    content: fetchResult.content,
+    source: url,
+    author: fetchResult.author,
+    tags: [],
+  }, { rawDir });
+
+  // Extract entities via LLM
+  let extraction;
+  try {
+    extraction = await extract(fetchResult.content, llm);
+  } catch (error) {
+    // LLM failure — raw file is archived, log the failure (FR-018)
+    appendLog({
+      timestamp: new Date().toISOString(),
+      sourceType: 'url',
+      source: url,
+      rawFile: rawSource.fileName,
+      pagesCreated: [],
+      pagesUpdated: [],
+      note: `Extraction failed: ${error.message}`,
+    }, { wikiDir });
+
+    return {
+      ok: true,
+      rawFile: rawSource.fileName,
+      pagesCreated: [],
+      pagesUpdated: [],
+      pagesFailed: [],
+      entitiesCreated: 0,
+      relationsCreated: 0,
+    };
+  }
+
+  // Process extracted entities — create or update wiki pages
+  const pagesCreated = [];
+  const pagesUpdated = [];
+  const pagesFailed = [];
+  let entitiesCreated = 0;
+  let relationsCreated = 0;
+
+  // Map entity name → kgId for relation creation
+  const entityKgMap = new Map();
+
+  for (const entity of extraction.entities) {
+    try {
+      const existing = findPage(entity.name, { wikiDir });
+      if (existing) {
+        const result = updatePage(existing.fileName, entity, rawSource.fileName, { wikiDir });
+        pagesUpdated.push(result.fileName);
+        entityKgMap.set(entity.name.toLowerCase(), result.kgId);
+      } else {
+        const result = createPage(entity, rawSource.fileName, { wikiDir });
+        pagesCreated.push(result.fileName);
+        entitiesCreated++;
+        entityKgMap.set(entity.name.toLowerCase(), result.kgId);
+      }
+    } catch (error) {
+      pagesFailed.push({ name: entity.name, error: error.message });
+    }
+  }
+
+  // Create KG relations
+  for (const relation of extraction.relations) {
+    const sourceId = entityKgMap.get(relation.source.toLowerCase());
+    const targetId = entityKgMap.get(relation.target.toLowerCase());
+    if (sourceId && targetId && sourceId !== targetId) {
+      try {
+        createRelation({
+          source_id: sourceId,
+          target_id: targetId,
+          type: relation.predicate,
+        });
+        relationsCreated++;
+      } catch {
+        // Duplicate or invalid relation — skip silently
+      }
+    }
+  }
+
+  // Regenerate index
+  regenerateIndex({ wikiDir });
+
+  // Append log
+  appendLog({
+    timestamp: new Date().toISOString(),
+    sourceType: 'url',
+    source: url,
+    rawFile: rawSource.fileName,
+    pagesCreated,
+    pagesUpdated,
+    pagesFailed: pagesFailed.length > 0 ? pagesFailed : undefined,
+    note: extraction.entities.length === 0 ? 'No entities extracted' : undefined,
+  }, { wikiDir });
+
+  return {
+    ok: true,
+    rawFile: rawSource.fileName,
+    pagesCreated,
+    pagesUpdated,
+    pagesFailed,
+    entitiesCreated,
+    relationsCreated,
+  };
+}
+
+/**
+ * Archives raw text, extracts entities/concepts via LLM, creates/updates wiki pages
+ * and KG entities, regenerates the index, and appends to the log.
+ *
+ * @param {string} title - Title for the raw source file. Non-empty.
+ * @param {string} text - Raw text content to ingest. Non-empty.
+ * @param {import('./extractor.mjs').LLMProvider} llm - Provider-agnostic LLM interface.
+ * @param {Object} [options]
+ * @param {string} [options.wikiDir='wiki'] - Root directory for wiki pages.
+ * @param {string} [options.rawDir='raw'] - Root directory for raw source files.
+ * @returns {Promise<{ ok: boolean, rawFile: string, pagesCreated: string[], pagesUpdated: string[], pagesFailed: { name: string, error: string }[], entitiesCreated: number, relationsCreated: number }>}
+ * @throws {Error} If title or text is empty.
+ */
+export async function ingestText(title, text, llm, options = {}) {
+  if (!title || typeof title !== 'string' || title.trim().length === 0) {
+    throw new Error('Title must be a non-empty string');
+  }
+
+  if (!text || typeof text !== 'string' || text.trim().length === 0) {
+    throw new Error('Text must be a non-empty string');
+  }
+
+  const wikiDir = options.wikiDir || 'wiki';
+  const rawDir = options.rawDir || 'raw';
+
+  // Ensure directories exist
+  _ensureWikiDirs(wikiDir);
+  mkdirSync(rawDir, { recursive: true });
+
+  // Archive raw source with source: "manual"
+  const rawSource = archiveRawSource({
+    title,
+    content: text,
+    source: 'manual',
+    tags: [],
+  }, { rawDir });
+
+  // Extract entities via LLM
+  let extraction;
+  try {
+    extraction = await extract(text, llm);
+  } catch (error) {
+    // LLM failure — raw file is archived, log the failure (FR-018)
+    appendLog({
+      timestamp: new Date().toISOString(),
+      sourceType: 'text',
+      source: title,
+      rawFile: rawSource.fileName,
+      pagesCreated: [],
+      pagesUpdated: [],
+      note: `Extraction failed: ${error.message}`,
+    }, { wikiDir });
+
+    return {
+      ok: true,
+      rawFile: rawSource.fileName,
+      pagesCreated: [],
+      pagesUpdated: [],
+      pagesFailed: [],
+      entitiesCreated: 0,
+      relationsCreated: 0,
+    };
+  }
+
+  // Process extracted entities
+  const pagesCreated = [];
+  const pagesUpdated = [];
+  const pagesFailed = [];
+  let entitiesCreated = 0;
+  let relationsCreated = 0;
+  const entityKgMap = new Map();
+
+  for (const entity of extraction.entities) {
+    try {
+      const existing = findPage(entity.name, { wikiDir });
+      if (existing) {
+        const result = updatePage(existing.fileName, entity, rawSource.fileName, { wikiDir });
+        pagesUpdated.push(result.fileName);
+        entityKgMap.set(entity.name.toLowerCase(), result.kgId);
+      } else {
+        const result = createPage(entity, rawSource.fileName, { wikiDir });
+        pagesCreated.push(result.fileName);
+        entitiesCreated++;
+        entityKgMap.set(entity.name.toLowerCase(), result.kgId);
+      }
+    } catch (error) {
+      pagesFailed.push({ name: entity.name, error: error.message });
+    }
+  }
+
+  // Create KG relations
+  for (const relation of extraction.relations) {
+    const sourceId = entityKgMap.get(relation.source.toLowerCase());
+    const targetId = entityKgMap.get(relation.target.toLowerCase());
+    if (sourceId && targetId && sourceId !== targetId) {
+      try {
+        createRelation({
+          source_id: sourceId,
+          target_id: targetId,
+          type: relation.predicate,
+        });
+        relationsCreated++;
+      } catch {
+        // Duplicate or invalid relation — skip silently
+      }
+    }
+  }
+
+  // Regenerate index
+  regenerateIndex({ wikiDir });
+
+  // Append log
+  appendLog({
+    timestamp: new Date().toISOString(),
+    sourceType: 'text',
+    source: title,
+    rawFile: rawSource.fileName,
+    pagesCreated,
+    pagesUpdated,
+    pagesFailed: pagesFailed.length > 0 ? pagesFailed : undefined,
+    note: extraction.entities.length === 0 ? 'No entities extracted' : undefined,
+  }, { wikiDir });
+
+  return {
+    ok: true,
+    rawFile: rawSource.fileName,
+    pagesCreated,
+    pagesUpdated,
+    pagesFailed,
+    entitiesCreated,
+    relationsCreated,
+  };
+}
+
+/**
+ * Ensures all wiki subdirectories exist.
+ * @param {string} wikiDir
+ */
+function _ensureWikiDirs(wikiDir) {
+  for (const subDir of ['entities', 'concepts', 'topics', 'comparisons']) {
+    mkdirSync(join(wikiDir, subDir), { recursive: true });
+  }
+}
