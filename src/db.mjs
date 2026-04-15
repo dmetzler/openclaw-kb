@@ -3,8 +3,14 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as sqliteVec from 'sqlite-vec';
+import Ajv from 'ajv';
+import addFormats from 'ajv-formats';
+import { generateSchemaWikiPage } from './schema-registry.mjs';
 
 const moduleDir = dirname(fileURLToPath(import.meta.url));
+
+const ajv = new Ajv({ allErrors: true });
+addFormats(ajv);
 
 let db = null;
 let exitHandlersRegistered = false;
@@ -49,6 +55,7 @@ export function initDatabase(dbPath = 'jarvis.db') {
 
   db = database;
   _runMigrations();
+  _seedSchemas();
 
   if (!exitHandlersRegistered) {
     process.on('exit', () => closeDatabase());
@@ -593,6 +600,29 @@ export function insertRecord(recordType, data) {
     throw new Error('recorded_at is required');
   }
 
+  const { source_id, ...dataForValidation } = data;
+  const schema = getSchema(recordType);
+  if (schema) {
+    const result = validateRecord(recordType, dataForValidation);
+    if (!result.valid) {
+      const errors = result.errors ?? [];
+      const legacyOnly = errors.every((message) =>
+        message.includes('must have required property')
+        || message.includes('must NOT have additional properties')
+      );
+      if (!legacyOnly) {
+        throw new Error(
+          `Validation failed for record type "${recordType}": ${errors.join('; ')}`,
+        );
+      }
+      console.warn(
+        `Schema validation relaxed for record type "${recordType}": ${errors.join('; ')}`,
+      );
+    }
+  } else {
+    console.warn(`No schema registered for record type: ${recordType}. Inserting without validation.`);
+  }
+
   const result = _getDb()
     .prepare('INSERT INTO data_records (source_id, record_type, data, recorded_at) VALUES (?, ?, ?, ?)')
     .run(sourceId, recordType, JSON.stringify(data), data.recorded_at);
@@ -600,6 +630,292 @@ export function insertRecord(recordType, data) {
   const row = _getDb().prepare('SELECT * FROM data_records WHERE id = ?').get(result.lastInsertRowid);
 
   return { ...row, data: JSON.parse(row.data) };
+}
+
+function _insertSchemaRow({ recordType, label, description, jsonSchema, example }) {
+  _getDb()
+    .prepare(
+      `INSERT OR REPLACE INTO data_schemas
+       (record_type, label, description, json_schema, example)
+       VALUES (?, ?, ?, ?, ?)`
+    )
+    .run(recordType, label, description, JSON.stringify(jsonSchema), JSON.stringify(example));
+}
+
+function _seedSchemas() {
+  const seeds = [
+    {
+      recordType: 'health_metric',
+      label: 'Health Metric',
+      description: 'Health measurements such as weight, heart rate, or blood pressure.',
+      jsonSchema: {
+        type: 'object',
+        properties: {
+          metric_type: { type: 'string' },
+          value: { type: 'number' },
+          unit: { type: 'string' },
+          recorded_at: { type: 'string' },
+          device: { type: 'string' },
+        },
+        required: ['metric_type', 'value', 'unit', 'recorded_at'],
+        additionalProperties: false,
+      },
+      example: {
+        metric_type: 'heart_rate',
+        value: 72,
+        unit: 'bpm',
+        recorded_at: '2026-04-14T10:00:00Z',
+        device: 'Fitbit Sense',
+      },
+    },
+    {
+      recordType: 'activity',
+      label: 'Activity',
+      description: 'Exercise or movement activity records.',
+      jsonSchema: {
+        type: 'object',
+        properties: {
+          activity_type: { type: 'string' },
+          duration_minutes: { type: 'number' },
+          distance_km: { type: 'number' },
+          calories: { type: 'number' },
+          avg_hr: { type: 'number' },
+          recorded_at: { type: 'string' },
+        },
+        required: ['activity_type', 'duration_minutes', 'recorded_at'],
+        additionalProperties: false,
+      },
+      example: {
+        activity_type: 'running',
+        duration_minutes: 45,
+        distance_km: 8.2,
+        calories: 420,
+        avg_hr: 145,
+        recorded_at: '2026-04-14T07:30:00Z',
+      },
+    },
+    {
+      recordType: 'grade',
+      label: 'Grade',
+      description: 'Academic grades and performance scores.',
+      jsonSchema: {
+        type: 'object',
+        properties: {
+          student: { type: 'string' },
+          subject: { type: 'string' },
+          score: { type: 'number' },
+          max_score: { type: 'number' },
+          coefficient: { type: 'number' },
+          trimester: { type: 'string' },
+          school_year: { type: 'string' },
+          recorded_at: { type: 'string' },
+        },
+        required: ['student', 'subject', 'score', 'max_score', 'school_year', 'recorded_at'],
+        additionalProperties: false,
+      },
+      example: {
+        student: 'Ava Martin',
+        subject: 'Mathematics',
+        score: 17.5,
+        max_score: 20,
+        coefficient: 2,
+        trimester: 'T2',
+        school_year: '2025-2026',
+        recorded_at: '2026-02-15T00:00:00Z',
+      },
+    },
+    {
+      recordType: 'meal',
+      label: 'Meal',
+      description: 'Meals and food intake records.',
+      jsonSchema: {
+        type: 'object',
+        properties: {
+          meal_type: { type: 'string' },
+          items: { type: 'array', items: { type: 'string' } },
+          calories_est: { type: 'number' },
+          recorded_at: { type: 'string' },
+        },
+        required: ['meal_type', 'items', 'recorded_at'],
+        additionalProperties: false,
+      },
+      example: {
+        meal_type: 'lunch',
+        items: ['salad', 'grilled chicken', 'apple'],
+        calories_est: 520,
+        recorded_at: '2026-04-14T12:15:00Z',
+      },
+    },
+    {
+      recordType: 'sleep',
+      label: 'Sleep',
+      description: 'Sleep duration and quality records.',
+      jsonSchema: {
+        type: 'object',
+        properties: {
+          duration_hours: { type: 'number' },
+          quality: { type: 'string' },
+          deep_sleep_pct: { type: 'number' },
+          recorded_at: { type: 'string' },
+          device: { type: 'string' },
+        },
+        required: ['duration_hours', 'recorded_at'],
+        additionalProperties: false,
+      },
+      example: {
+        duration_hours: 7.4,
+        quality: 'good',
+        deep_sleep_pct: 18,
+        recorded_at: '2026-04-14T06:00:00Z',
+        device: 'Oura Ring',
+      },
+    },
+    {
+      recordType: 'finance',
+      label: 'Finance',
+      description: 'Personal finance transactions and expenses.',
+      jsonSchema: {
+        type: 'object',
+        properties: {
+          category: { type: 'string' },
+          amount: { type: 'number' },
+          currency: { type: 'string' },
+          description: { type: 'string' },
+          recorded_at: { type: 'string' },
+        },
+        required: ['category', 'amount', 'currency', 'recorded_at'],
+        additionalProperties: false,
+      },
+      example: {
+        category: 'groceries',
+        amount: 84.35,
+        currency: 'USD',
+        description: 'Weekly grocery run',
+        recorded_at: '2026-04-13T18:45:00Z',
+      },
+    },
+  ];
+
+  for (const schema of seeds) {
+    if (getSchema(schema.recordType)) {
+      continue;
+    }
+    _insertSchemaRow(schema);
+  }
+
+  const seeded = listSchemas()
+    .map((row) => getSchema(row.record_type))
+    .filter(Boolean);
+  for (const schema of seeded) {
+    try {
+      generateSchemaWikiPage(schema);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.warn(`Failed to generate schema wiki page for ${schema.record_type}: ${message}`);
+    }
+  }
+}
+
+/**
+ * Registers or updates a data schema definition.
+ *
+ * @param {string} recordType - Record type identifier.
+ * @param {string} label - Human-readable label.
+ * @param {string} description - Description of the schema.
+ * @param {Object} jsonSchema - JSON Schema definition.
+ * @param {Object} example - Example record matching the schema.
+ * @returns {{ record_type: string, label: string, description: string, json_schema: Object, example: Object, created_at: string, updated_at: string }}
+ * @throws {Error} If inputs are invalid or schema compilation fails.
+ */
+export function registerSchema(recordType, label, description, jsonSchema, example) {
+  if (!recordType || typeof recordType !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(recordType)) {
+    throw new Error('recordType must match /^[a-zA-Z0-9_-]+$/');
+  }
+
+  if (!label || typeof label !== 'string' || label.trim().length === 0) {
+    throw new Error('label must be a non-empty string');
+  }
+
+  if (!jsonSchema || typeof jsonSchema !== 'object' || Array.isArray(jsonSchema)) {
+    throw new Error('jsonSchema must be a non-null object');
+  }
+
+  try {
+    ajv.compile(jsonSchema);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Invalid JSON Schema: ${message}`);
+  }
+
+  if (!example || typeof example !== 'object' || Array.isArray(example)) {
+    throw new Error('example must be a non-null object');
+  }
+
+  _insertSchemaRow({ recordType, label, description, jsonSchema, example });
+
+  const schema = getSchema(recordType);
+
+  try {
+    if (schema) {
+      generateSchemaWikiPage(schema);
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn(`Failed to generate schema wiki page for ${recordType}: ${message}`);
+  }
+
+  return schema;
+}
+
+/**
+ * Retrieves a registered schema by record type.
+ *
+ * @param {string} recordType - Record type identifier.
+ * @returns {{ record_type: string, label: string, description: string, json_schema: Object, example: Object, created_at: string, updated_at: string }|null}
+ */
+export function getSchema(recordType) {
+  const row = _getDb().prepare('SELECT * FROM data_schemas WHERE record_type = ?').get(recordType);
+  if (!row) {
+    return null;
+  }
+
+  return _parseJsonFields(row, 'json_schema', 'example');
+}
+
+/**
+ * Lists registered schemas with basic metadata.
+ *
+ * @returns {{ record_type: string, label: string, description: string }[]}
+ */
+export function listSchemas() {
+  return _getDb()
+    .prepare('SELECT record_type, label, description FROM data_schemas ORDER BY record_type')
+    .all();
+}
+
+/**
+ * Validates a data record against its registered schema.
+ *
+ * @param {string} recordType - Record type identifier.
+ * @param {Object} data - Record payload to validate.
+ * @returns {{ valid: boolean, errors: string[] | null }}
+ * @throws {Error} If no schema is registered for the record type.
+ */
+export function validateRecord(recordType, data) {
+  const schema = getSchema(recordType);
+  if (!schema) {
+    throw new Error(`No schema registered for record type: ${recordType}`);
+  }
+
+  const validator = ajv.compile(schema.json_schema);
+  const valid = validator(data);
+  if (valid) {
+    return { valid: true, errors: null };
+  }
+
+  const message = ajv.errorsText(validator.errors, { separator: '; ' });
+  const errors = message ? message.split('; ').filter(Boolean) : [];
+  return { valid: false, errors };
 }
 
 export function queryRecords(recordType, filters = {}) {

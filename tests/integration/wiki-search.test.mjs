@@ -153,7 +153,11 @@ describe('deduplicateResults', () => {
 
   it('returns data records alongside entities with same name', async () => {
     seedKGEntity('Sleep', 'topic');
-    seedDataRecord('sleep', { summary: 'sleep tracking' }, '2026-04-14T12:00:00Z');
+    seedDataRecord(
+      'sleep',
+      { duration_hours: 7.5, quality: 'good' },
+      '2026-04-14T12:00:00Z',
+    );
 
     const results = await search('sleep', { includeScores: true });
 
@@ -165,7 +169,11 @@ describe('deduplicateResults', () => {
 describe('User Story 1: Unified Search', () => {
   it('returns results from each tier and orders KG first', async () => {
     seedKGEntity('Node.js', 'technology');
-    seedDataRecord('activity', { activity_type: 'Node workshop' }, '2026-04-14T10:00:00Z');
+    seedDataRecord(
+      'activity',
+      { activity_type: 'Node workshop', duration_minutes: 90 },
+      '2026-04-14T10:00:00Z',
+    );
 
     const kgResults = searchKG('Node');
     const dataResults = searchData('Node');
@@ -201,7 +209,11 @@ describe('User Story 1: Unified Search', () => {
 
   it('filters tiers and excludes data records when tiers are [1, 3]', async () => {
     seedKGEntity('Tier Filtering', 'note');
-    seedDataRecord('health_metric', { metric_type: 'Unrelated Metric', value: 1 }, '2026-04-14T10:00:00Z');
+    seedDataRecord(
+      'health_metric',
+      { metric_type: 'Unrelated Metric', value: 1, unit: 'count' },
+      '2026-04-14T10:00:00Z',
+    );
 
     const results = await search('Tier', { tiers: [1, 3], includeScores: true });
 
@@ -368,8 +380,16 @@ describe('User Story 3: Semantic Search', () => {
 
 describe('User Story 4: Data Records Search', () => {
   it('filters by record type', () => {
-    seedDataRecord('health_metric', { metric_type: 'heart_rate', value: 72 }, '2026-04-14T10:00:00Z');
-    seedDataRecord('activity', { activity_type: 'running' }, '2026-04-14T11:00:00Z');
+    seedDataRecord(
+      'health_metric',
+      { metric_type: 'heart_rate', value: 72, unit: 'bpm' },
+      '2026-04-14T10:00:00Z',
+    );
+    seedDataRecord(
+      'activity',
+      { activity_type: 'running', duration_minutes: 45 },
+      '2026-04-14T11:00:00Z',
+    );
 
     const results = searchData('running', 'activity');
 
@@ -378,8 +398,16 @@ describe('User Story 4: Data Records Search', () => {
   });
 
   it('orders results by descending score', () => {
-    seedDataRecord('health_metric', { metric_type: 'weight', value: 80 }, '2026-04-14T10:00:00Z');
-    seedDataRecord('health_metric', { metric_type: 'weight weight', value: 82 }, '2026-04-14T11:00:00Z');
+    seedDataRecord(
+      'health_metric',
+      { metric_type: 'weight', value: 80, unit: 'kg' },
+      '2026-04-14T10:00:00Z',
+    );
+    seedDataRecord(
+      'health_metric',
+      { metric_type: 'weight weight', value: 82, unit: 'kg' },
+      '2026-04-14T11:00:00Z',
+    );
 
     const results = searchData('weight', 'health_metric');
 
@@ -391,8 +419,16 @@ describe('User Story 4: Data Records Search', () => {
   });
 
   it('returns matching records across all types when recordType omitted', () => {
-    seedDataRecord('health_metric', { metric_type: 'weight', value: 80 }, '2026-04-14T10:00:00Z');
-    seedDataRecord('activity', { activity_type: 'weight lifting' }, '2026-04-14T11:00:00Z');
+    seedDataRecord(
+      'health_metric',
+      { metric_type: 'weight', value: 80, unit: 'kg' },
+      '2026-04-14T10:00:00Z',
+    );
+    seedDataRecord(
+      'activity',
+      { activity_type: 'weight lifting', duration_minutes: 50 },
+      '2026-04-14T11:00:00Z',
+    );
 
     const results = searchData('weight');
 
@@ -401,7 +437,11 @@ describe('User Story 4: Data Records Search', () => {
   });
 
   it('includes record metadata shape', () => {
-    seedDataRecord('health_metric', { metric_type: 'weight', value: 80 }, '2026-04-14T10:00:00Z');
+    seedDataRecord(
+      'health_metric',
+      { metric_type: 'weight', value: 80, unit: 'kg' },
+      '2026-04-14T10:00:00Z',
+    );
 
     const [result] = searchData('weight', 'health_metric');
 
@@ -506,7 +546,11 @@ describe('Performance', () => {
     }
 
     for (let index = 1; index <= 5000; index += 1) {
-      seedDataRecord('health_metric', { metric_type: `metric ${index}`, value: index }, '2026-04-14T10:00:00Z');
+      seedDataRecord(
+        'health_metric',
+        { metric_type: `metric ${index}`, value: index, unit: 'count' },
+        '2026-04-14T10:00:00Z',
+      );
     }
 
     for (let index = 1; index <= 500; index += 1) {
@@ -524,7 +568,11 @@ describe('Performance', () => {
 
   it('searchData runs under 200ms with large record counts', () => {
     for (let index = 1; index <= 5000; index += 1) {
-      seedDataRecord('activity', { activity_type: `running ${index}` }, '2026-04-14T10:00:00Z');
+      seedDataRecord(
+        'activity',
+        { activity_type: `running ${index}`, duration_minutes: 30 },
+        '2026-04-14T10:00:00Z',
+      );
     }
 
     const start = performance.now();
@@ -539,7 +587,11 @@ describe('Performance', () => {
 describe('Polish', () => {
   it('executes quickstart.md examples without errors', async () => {
     seedKGEntity('Node.js', 'technology');
-    seedDataRecord('health_metric', { metric_type: 'blood pressure', value: 120 }, '2026-04-14T08:30:00Z');
+    seedDataRecord(
+      'health_metric',
+      { metric_type: 'blood pressure', value: 120, unit: 'mmHg' },
+      '2026-04-14T08:30:00Z',
+    );
 
     await expect(search('Node.js')).resolves.toBeDefined();
     await expect(search('Node.js', { maxResults: 10, tiers: [1, 3], includeScores: true })).resolves.toBeDefined();

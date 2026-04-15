@@ -38,11 +38,46 @@ function seedDatabase() {
 
   const r1 = createRelation({ source_id: e1.id, target_id: e2.id, type: 'works_at', metadata: { since: '2020' } });
 
-  insertRecord('health_metric', { source_id: ds1.id, metric_type: 'heart_rate', value: 72, unit: 'bpm', recorded_at: '2026-04-10T08:00:00', metadata: { resting: true } });
-  insertRecord('health_metric', { source_id: ds1.id, metric_type: 'weight', value: 75.5, unit: 'kg', recorded_at: '2026-04-10T08:00:00', metadata: {} });
-  insertRecord('activity', { source_id: ds1.id, activity_type: 'running', duration_minutes: 30, intensity: 'moderate', recorded_at: '2026-04-10T07:00:00', metadata: {} });
-  insertRecord('grade', { source_id: ds2.id, subject: 'Mathematics', score: 95, scale: 'percentage', recorded_at: '2026-04-10T09:00:00', metadata: {} });
-  insertRecord('meal', { source_id: ds1.id, meal_type: 'breakfast', items: ['oatmeal', 'coffee'], nutrition: { calories: 350 }, recorded_at: '2026-04-10T07:00:00', metadata: {} });
+  insertRecord('health_metric', {
+    source_id: ds1.id,
+    metric_type: 'heart_rate',
+    value: 72,
+    unit: 'bpm',
+    recorded_at: '2026-04-10T08:00:00',
+    device: 'Fitbit Sense',
+  });
+  insertRecord('health_metric', {
+    source_id: ds1.id,
+    metric_type: 'weight',
+    value: 75.5,
+    unit: 'kg',
+    recorded_at: '2026-04-10T08:00:00',
+    device: 'Withings Scale',
+  });
+  insertRecord('activity', {
+    source_id: ds1.id,
+    activity_type: 'running',
+    duration_minutes: 30,
+    distance_km: 5.2,
+    calories: 320,
+    recorded_at: '2026-04-10T07:00:00',
+  });
+  insertRecord('grade', {
+    source_id: ds2.id,
+    student: 'John Doe',
+    subject: 'Mathematics',
+    score: 95,
+    max_score: 100,
+    school_year: '2025-2026',
+    recorded_at: '2026-04-10T09:00:00',
+  });
+  insertRecord('meal', {
+    source_id: ds1.id,
+    meal_type: 'breakfast',
+    items: ['oatmeal', 'coffee'],
+    calories_est: 350,
+    recorded_at: '2026-04-10T07:00:00',
+  });
 
   const vec = new Float32Array(EMBEDDING_DIMENSIONS);
   for (let i = 0; i < EMBEDDING_DIMENSIONS; i++) vec[i] = (i - 192) / 100;

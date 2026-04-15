@@ -227,15 +227,18 @@ describe('Generic Data Records', () => {
       recorded_at: '2026-04-14T11:00:00Z',
       activity_type: 'run',
       duration_minutes: 45,
-      intensity: 'high',
+      distance_km: 6.2,
+      calories: 430,
     });
 
     const grade = insertRecord('grade', {
       source_id: src.id,
       recorded_at: '2026-04-14T12:00:00Z',
+      student: 'Alex Kim',
       subject: 'math',
       score: 95,
-      scale: 'percent',
+      max_score: 100,
+      school_year: '2025-2026',
     });
 
     const meal = insertRecord('meal', {
@@ -243,6 +246,7 @@ describe('Generic Data Records', () => {
       recorded_at: '2026-04-14T13:00:00Z',
       meal_type: 'breakfast',
       items: ['oats', 'banana'],
+      calories_est: 420,
     });
 
     const healthResults = queryRecords('health_metric', { source_id: src.id });

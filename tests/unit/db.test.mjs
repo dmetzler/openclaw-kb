@@ -472,18 +472,21 @@ describe('queryRecords', () => {
       recorded_at: '2026-04-14T10:00:00Z',
       metric_type: 'weight',
       value: 80,
+      unit: 'kg',
     });
     insertRecord('health_metric', {
       source_id: src.id,
       recorded_at: '2026-04-14T11:00:00Z',
       metric_type: 'heart_rate',
       value: 70,
+      unit: 'bpm',
     });
     insertRecord('health_metric', {
       source_id: src.id,
       recorded_at: '2026-04-14T12:00:00Z',
       metric_type: 'weight',
       value: 81,
+      unit: 'kg',
     });
 
     const results = queryRecords('health_metric', {

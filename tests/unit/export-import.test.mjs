@@ -66,15 +66,14 @@ describe('getAll* functions return parsed JSON fields', () => {
       metric_type: 'weight',
       value: 80,
       unit: 'kg',
-      metadata: {},
     });
     insertRecord('activity', {
       source_id: src.id,
       recorded_at: '2026-04-14T07:00:00Z',
       activity_type: 'running',
       duration_minutes: 30,
-      intensity: 'moderate',
-      metadata: {},
+      distance_km: 5.2,
+      calories: 320,
     });
 
     const records = getAllDataRecords();
@@ -111,7 +110,6 @@ describe('getRecordCounts', () => {
       metric_type: 'weight',
       value: 80,
       unit: 'kg',
-      metadata: {},
     });
 
     const counts = getRecordCounts();

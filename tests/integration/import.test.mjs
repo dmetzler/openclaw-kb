@@ -52,11 +52,46 @@ function seedDatabase() {
 
   createRelation({ source_id: e1.id, target_id: e2.id, type: 'works_at', metadata: { since: '2020' } });
 
-  insertRecord('health_metric', { source_id: ds1.id, metric_type: 'heart_rate', value: 72, unit: 'bpm', recorded_at: '2026-04-10T08:00:00', metadata: { resting: true } });
-  insertRecord('health_metric', { source_id: ds1.id, metric_type: 'weight', value: 75.5, unit: 'kg', recorded_at: '2026-04-10T08:00:00', metadata: {} });
-  insertRecord('activity', { source_id: ds1.id, activity_type: 'running', duration_minutes: 30, intensity: 'moderate', recorded_at: '2026-04-10T07:00:00', metadata: {} });
-  insertRecord('grade', { source_id: ds2.id, subject: 'Mathematics', score: 95, scale: 'percentage', recorded_at: '2026-04-10T09:00:00', metadata: {} });
-  insertRecord('meal', { source_id: ds1.id, meal_type: 'breakfast', items: ['oatmeal', 'coffee'], nutrition: { calories: 350 }, recorded_at: '2026-04-10T07:00:00', metadata: {} });
+  insertRecord('health_metric', {
+    source_id: ds1.id,
+    metric_type: 'heart_rate',
+    value: 72,
+    unit: 'bpm',
+    recorded_at: '2026-04-10T08:00:00',
+    device: 'Fitbit Sense',
+  });
+  insertRecord('health_metric', {
+    source_id: ds1.id,
+    metric_type: 'weight',
+    value: 75.5,
+    unit: 'kg',
+    recorded_at: '2026-04-10T08:00:00',
+    device: 'Withings Scale',
+  });
+  insertRecord('activity', {
+    source_id: ds1.id,
+    activity_type: 'running',
+    duration_minutes: 30,
+    distance_km: 5.2,
+    calories: 320,
+    recorded_at: '2026-04-10T07:00:00',
+  });
+  insertRecord('grade', {
+    source_id: ds2.id,
+    student: 'John Doe',
+    subject: 'Mathematics',
+    score: 95,
+    max_score: 100,
+    school_year: '2025-2026',
+    recorded_at: '2026-04-10T09:00:00',
+  });
+  insertRecord('meal', {
+    source_id: ds1.id,
+    meal_type: 'breakfast',
+    items: ['oatmeal', 'coffee'],
+    calories_est: 350,
+    recorded_at: '2026-04-10T07:00:00',
+  });
 
   const vec = new Float32Array(EMBEDDING_DIMENSIONS);
   for (let i = 0; i < EMBEDDING_DIMENSIONS; i++) vec[i] = (i - 192) / 100;
@@ -134,7 +169,7 @@ describe('Full import integration', () => {
     const healthMetrics = records.filter((r) => r.record_type === 'health_metric');
     expect(healthMetrics).toHaveLength(2);
     const heartRate = healthMetrics.find((r) => r.data.metric_type === 'heart_rate');
-    expect(heartRate.data.metadata).toEqual({ resting: true });
+    expect(heartRate.data.device).toBe('Fitbit Sense');
 
     const activities = records.filter((r) => r.record_type === 'activity');
     expect(activities).toHaveLength(1);
@@ -143,11 +178,12 @@ describe('Full import integration', () => {
     const grades = records.filter((r) => r.record_type === 'grade');
     expect(grades).toHaveLength(1);
     expect(grades[0].data.subject).toBe('Mathematics');
+    expect(grades[0].data.student).toBe('John Doe');
 
     const meals = records.filter((r) => r.record_type === 'meal');
     expect(meals).toHaveLength(1);
     expect(meals[0].data.items).toEqual(['oatmeal', 'coffee']);
-    expect(meals[0].data.nutrition).toEqual({ calories: 350 });
+    expect(meals[0].data.calories_est).toBe(350);
   });
 
   it('embeddings are queryable via KNN after import', () => {

@@ -17,8 +17,8 @@
 
 **Purpose**: Install dependencies and create database migration
 
-- [ ] T001 Install `ajv` and `ajv-formats` npm dependencies in `package.json`
-- [ ] T002 Create migration `src/migrations/003-data-schema-registry.sql` with `data_schemas` table DDL and `updated_at` trigger per `data-model.md`
+- [x] T001 Install `ajv` and `ajv-formats` npm dependencies in `package.json`
+- [x] T002 Create migration `src/migrations/003-data-schema-registry.sql` with `data_schemas` table DDL and `updated_at` trigger per `data-model.md`
 
 ---
 
@@ -28,11 +28,11 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T003 Add `registerSchema(recordType, label, description, jsonSchema, example)` function to `src/db.mjs` per contracts. Uses `INSERT OR REPLACE` into `data_schemas`. Validates: record_type matches `/^[a-zA-Z0-9_-]+$/`, label non-empty, jsonSchema is valid compilable JSON Schema via ajv. Returns stored row with parsed JSON fields. Does NOT generate wiki pages yet (that comes in US5).
-- [ ] T004 Add `getSchema(recordType)` function to `src/db.mjs` per contracts. Returns full schema row with `json_schema` and `example` parsed from JSON strings, or `null` if not found.
-- [ ] T005 [P] Add `listSchemas()` function to `src/db.mjs` per contracts. Returns array of `{ record_type, label, description }` sorted alphabetically by `record_type`.
-- [ ] T006 Add `validateRecord(recordType, data)` function to `src/db.mjs` per contracts. Looks up schema via `getSchema()`, compiles with ajv, validates data. Returns `{ valid: boolean, errors: string[] | null }`. Throws if no schema registered.
-- [ ] T007 Add `_seedSchemas()` private function to `src/db.mjs` that registers the 6 pre-defined schemas (health_metric, activity, grade, meal, sleep, finance) if they don't already exist. Called from `initDatabase()` after `_runMigrations()`. Each schema includes complete JSON Schema definition and example record per `data-model.md`.
+- [x] T003 Add `registerSchema(recordType, label, description, jsonSchema, example)` function to `src/db.mjs` per contracts. Uses `INSERT OR REPLACE` into `data_schemas`. Validates: record_type matches `/^[a-zA-Z0-9_-]+$/`, label non-empty, jsonSchema is valid compilable JSON Schema via ajv. Returns stored row with parsed JSON fields. Does NOT generate wiki pages yet (that comes in US5).
+- [x] T004 Add `getSchema(recordType)` function to `src/db.mjs` per contracts. Returns full schema row with `json_schema` and `example` parsed from JSON strings, or `null` if not found.
+- [x] T005 [P] Add `listSchemas()` function to `src/db.mjs` per contracts. Returns array of `{ record_type, label, description }` sorted alphabetically by `record_type`.
+- [x] T006 Add `validateRecord(recordType, data)` function to `src/db.mjs` per contracts. Looks up schema via `getSchema()`, compiles with ajv, validates data. Returns `{ valid: boolean, errors: string[] | null }`. Throws if no schema registered.
+- [x] T007 Add `_seedSchemas()` private function to `src/db.mjs` that registers the 6 pre-defined schemas (health_metric, activity, grade, meal, sleep, finance) if they don't already exist. Called from `initDatabase()` after `_runMigrations()`. Each schema includes complete JSON Schema definition and example record per `data-model.md`.
 
 **Checkpoint**: Foundation ready — `registerSchema`, `getSchema`, `listSchemas`, `validateRecord` all functional. Schemas seeded on init.
 
@@ -46,12 +46,12 @@
 
 ### Tests for User Story 1
 
-- [ ] T008 [P] [US1] Write tests in `tests/unit/schema-registry.test.mjs`: test `listSchemas()` returns all 6 pre-registered schemas with record_type, label, description after `initDatabase(':memory:')`.
-- [ ] T009 [P] [US1] Write tests in `tests/unit/schema-registry.test.mjs`: test `getSchema('health_metric')` returns full schema with json_schema object containing properties, required array, and example object. Test `getSchema('unknown_type')` returns null.
+- [x] T008 [P] [US1] Write tests in `tests/unit/schema-registry.test.mjs`: test `listSchemas()` returns all 6 pre-registered schemas with record_type, label, description after `initDatabase(':memory:')`.
+- [x] T009 [P] [US1] Write tests in `tests/unit/schema-registry.test.mjs`: test `getSchema('health_metric')` returns full schema with json_schema object containing properties, required array, and example object. Test `getSchema('unknown_type')` returns null.
 
 ### Implementation for User Story 1
 
-- [ ] T010 [US1] Verify all 6 pre-registered schemas from T007 are discoverable: `listSchemas()` returns 6 entries, each `getSchema()` call returns complete schema with required/optional field definitions and example. Fix any issues.
+- [x] T010 [US1] Verify all 6 pre-registered schemas from T007 are discoverable: `listSchemas()` returns 6 entries, each `getSchema()` call returns complete schema with required/optional field definitions and example. Fix any issues.
 
 **Checkpoint**: User Story 1 complete — AI agents can discover and read all schemas.
 
@@ -65,12 +65,12 @@
 
 ### Tests for User Story 2
 
-- [ ] T011 [P] [US2] Write tests in `tests/unit/schema-registry.test.mjs`: test `validateRecord('health_metric', validData)` returns `{ valid: true, errors: null }`. Test with missing required field returns `{ valid: false, errors: [...] }` with field name in error. Test with wrong type returns errors. Test throws for unregistered type.
-- [ ] T012 [P] [US2] Write tests in `tests/unit/schema-registry.test.mjs`: test `insertRecord('health_metric', validData)` succeeds. Test `insertRecord('health_metric', invalidData)` throws with descriptive error. Test `insertRecord('unregistered_type', data)` succeeds (requires `console.warn` spy to verify warning logged). Test optional fields can be omitted.
+- [x] T011 [P] [US2] Write tests in `tests/unit/schema-registry.test.mjs`: test `validateRecord('health_metric', validData)` returns `{ valid: true, errors: null }`. Test with missing required field returns `{ valid: false, errors: [...] }` with field name in error. Test with wrong type returns errors. Test throws for unregistered type.
+- [x] T012 [P] [US2] Write tests in `tests/unit/schema-registry.test.mjs`: test `insertRecord('health_metric', validData)` succeeds. Test `insertRecord('health_metric', invalidData)` throws with descriptive error. Test `insertRecord('unregistered_type', data)` succeeds (requires `console.warn` spy to verify warning logged). Test optional fields can be omitted.
 
 ### Implementation for User Story 2
 
-- [ ] T013 [US2] Modify `insertRecord()` in `src/db.mjs` to add schema validation step between existing parameter checks (line ~594) and the SQL INSERT (line ~596). If schema exists for `recordType`: validate `data` via `validateRecord()`, throw on failure with message `'Validation failed for record type "${recordType}": ${errors}'`. If no schema exists: `console.warn('No schema registered for record type: ${recordType}. Inserting without validation.')` and proceed.
+- [x] T013 [US2] Modify `insertRecord()` in `src/db.mjs` to add schema validation step between existing parameter checks (line ~594) and the SQL INSERT (line ~596). If schema exists for `recordType`: validate `data` via `validateRecord()`, throw on failure with message `'Validation failed for record type "${recordType}": ${errors}'`. If no schema exists: `console.warn('No schema registered for record type: ${recordType}. Inserting without validation.')` and proceed.
 
 **Checkpoint**: User Story 2 complete — data quality enforced on insertion.
 
@@ -84,11 +84,11 @@
 
 ### Tests for User Story 3
 
-- [ ] T014 [P] [US3] Write tests in `tests/unit/schema-registry.test.mjs`: test fresh `initDatabase(':memory:')` → `listSchemas()` returns exactly 6 schemas. Test each pre-registered schema has valid json_schema (compilable by ajv) and example that validates against its own schema.
+- [x] T014 [P] [US3] Write tests in `tests/unit/schema-registry.test.mjs`: test fresh `initDatabase(':memory:')` → `listSchemas()` returns exactly 6 schemas. Test each pre-registered schema has valid json_schema (compilable by ajv) and example that validates against its own schema.
 
 ### Implementation for User Story 3
 
-- [ ] T015 [US3] Verify the `_seedSchemas()` implementation from T007 covers all acceptance scenarios. Ensure each schema's example record passes validation against its own json_schema. Fix any schema definition issues.
+- [x] T015 [US3] Verify the `_seedSchemas()` implementation from T007 covers all acceptance scenarios. Ensure each schema's example record passes validation against its own json_schema. Fix any schema definition issues.
 
 **Checkpoint**: User Story 3 complete — all known data types have schemas from day one.
 
@@ -102,11 +102,11 @@
 
 ### Tests for User Story 4
 
-- [ ] T016 [P] [US4] Write tests in `tests/unit/schema-registry.test.mjs`: test register new type → appears in listSchemas. Test register existing type → replaces definition. Test register with invalid record_type (spaces, special chars) → throws. Test register with non-object jsonSchema → throws. Test newly registered schema validates records immediately.
+- [x] T016 [P] [US4] Write tests in `tests/unit/schema-registry.test.mjs`: test register new type → appears in listSchemas. Test register existing type → replaces definition. Test register with invalid record_type (spaces, special chars) → throws. Test register with non-object jsonSchema → throws. Test newly registered schema validates records immediately.
 
 ### Implementation for User Story 4
 
-- [ ] T017 [US4] Verify `registerSchema()` from T003 handles upsert correctly (INSERT OR REPLACE). Verify validation edge cases: record_type with special chars rejected, invalid JSON Schema rejected, malformed example handled. Fix any issues.
+- [x] T017 [US4] Verify `registerSchema()` from T003 handles upsert correctly (INSERT OR REPLACE). Verify validation edge cases: record_type with special chars rejected, invalid JSON Schema rejected, malformed example handled. Fix any issues.
 
 **Checkpoint**: User Story 4 complete — runtime schema extensibility works.
 
@@ -120,13 +120,13 @@
 
 ### Tests for User Story 5
 
-- [ ] T018 [P] [US5] Write tests in `tests/unit/schema-registry.test.mjs`: test `generateSchemaWikiPage()` creates a file in wiki/schemas/ with correct slug. Test file contains frontmatter (type, record_type, label), field table, and JSON example block. Test re-registration regenerates wiki page. Use a temp directory for wiki output in tests.
+- [x] T018 [P] [US5] Write tests in `tests/unit/schema-registry.test.mjs`: test `generateSchemaWikiPage()` creates a file in wiki/schemas/ with correct slug. Test file contains frontmatter (type, record_type, label), field table, and JSON example block. Test re-registration regenerates wiki page. Use a temp directory for wiki output in tests.
 
 ### Implementation for User Story 5
 
-- [ ] T019 [US5] Create `generateSchemaWikiPage(schema, options)` function in `src/schema-registry.mjs`. Takes a schema object (from `getSchema()`), generates Obsidian-compatible Markdown per wiki page contract. Uses `slugify()` from `src/wiki.mjs` for file naming. Writes to `wiki/schemas/` directory (created if needed). Includes: frontmatter, description, field table (extracted from JSON Schema properties + required array), and formatted JSON example.
-- [ ] T020 [US5] Wire wiki generation into `registerSchema()` in `src/db.mjs` — after successful DB upsert, call `generateSchemaWikiPage()`. Import from `schema-registry.mjs`. Handle wiki generation failure gracefully (log warning, don't fail the registration).
-- [ ] T021 [US5] Generate wiki pages for all 6 pre-registered schemas by calling `generateSchemaWikiPage()` from `_seedSchemas()` in `src/db.mjs`.
+- [x] T019 [US5] Create `generateSchemaWikiPage(schema, options)` function in `src/schema-registry.mjs`. Takes a schema object (from `getSchema()`), generates Obsidian-compatible Markdown per wiki page contract. Uses `slugify()` from `src/wiki.mjs` for file naming. Writes to `wiki/schemas/` directory (created if needed). Includes: frontmatter, description, field table (extracted from JSON Schema properties + required array), and formatted JSON example.
+- [x] T020 [US5] Wire wiki generation into `registerSchema()` in `src/db.mjs` — after successful DB upsert, call `generateSchemaWikiPage()`. Import from `schema-registry.mjs`. Handle wiki generation failure gracefully (log warning, don't fail the registration).
+- [x] T021 [US5] Generate wiki pages for all 6 pre-registered schemas by calling `generateSchemaWikiPage()` from `_seedSchemas()` in `src/db.mjs`.
 
 **Checkpoint**: User Story 5 complete — every schema has a wiki page.
 
@@ -140,11 +140,11 @@
 
 ### Tests for User Story 6
 
-- [ ] T022 [P] [US6] Write tests in `tests/unit/schema-registry.test.mjs`: test CLI arg parsing for each command. Test `list` outputs table format. Test `get` with valid/invalid type. Test `register` from JSON file. Test `validate` with valid/invalid data. Test no-args shows usage. Test exit codes.
+- [x] T022 [P] [US6] Write tests in `tests/unit/schema-registry.test.mjs`: test CLI arg parsing for each command. Test `list` outputs table format. Test `get` with valid/invalid type. Test `register` from JSON file. Test `validate` with valid/invalid data. Test no-args shows usage. Test exit codes.
 
 ### Implementation for User Story 6
 
-- [ ] T023 [US6] Build CLI in `src/schema-registry.mjs` following existing patterns from `src/kb-export.mjs`. Implement `isMainModule` check, `process.argv` parsing, and commands: `list` (table output of all schemas), `get <type>` (full schema details as formatted JSON), `register <json-file>` (read JSON file, call `registerSchema()`), `validate <type> <json-file>` (read JSON file, call `validateRecord()`). Exit codes: 0 success, 1 invalid args/validation failure, 2 file not found. Include usage/help text.
+- [x] T023 [US6] Build CLI in `src/schema-registry.mjs` following existing patterns from `src/kb-export.mjs`. Implement `isMainModule` check, `process.argv` parsing, and commands: `list` (table output of all schemas), `get <type>` (full schema details as formatted JSON), `register <json-file>` (read JSON file, call `registerSchema()`), `validate <type> <json-file>` (read JSON file, call `validateRecord()`). Exit codes: 0 success, 1 invalid args/validation failure, 2 file not found. Include usage/help text.
 
 **Checkpoint**: User Story 6 complete — full CLI for schema management.
 
@@ -157,7 +157,7 @@
 - [ ] T024 Run full test suite (`npm test`) and fix any failures
 - [ ] T025 Run `lsp_diagnostics` on all changed files (`src/db.mjs`, `src/schema-registry.mjs`, `tests/unit/schema-registry.test.mjs`) and fix any errors
 - [ ] T026 [P] Verify all 6 wiki pages generated correctly in `wiki/schemas/` — check formatting renders in Markdown
-- [ ] T027 Add JSDoc documentation to all new exported functions in `src/db.mjs` and `src/schema-registry.mjs`
+- [x] T027 Add JSDoc documentation to all new exported functions in `src/db.mjs` and `src/schema-registry.mjs`
 
 ---
 

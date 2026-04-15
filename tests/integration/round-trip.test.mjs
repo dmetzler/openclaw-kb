@@ -79,7 +79,7 @@ function seedComplexData() {
     value: 72,
     unit: 'bpm',
     recorded_at: '2026-04-10T08:00:00',
-    metadata: { resting: true },
+    device: 'Fitbit Sense',
   });
   insertRecord('health_metric', {
     source_id: ds1.id,
@@ -87,50 +87,49 @@ function seedComplexData() {
     value: 75.5,
     unit: 'kg',
     recorded_at: '2026-04-10T08:00:00',
-    metadata: {},
+    device: 'Withings Scale',
   });
 
   insertRecord('activity', {
     source_id: ds1.id,
     activity_type: 'running',
     duration_minutes: 30,
-    intensity: 'moderate',
+    distance_km: 5.2,
+    calories: 320,
     recorded_at: '2026-04-10T07:00:00',
-    metadata: { route: 'park loop' },
   });
   insertRecord('activity', {
     source_id: ds2.id,
     activity_type: 'yoga',
     duration_minutes: 60,
-    intensity: 'low',
+    distance_km: 0,
+    calories: 180,
     recorded_at: '2026-04-11T07:00:00',
-    metadata: {},
   });
 
   insertRecord('grade', {
     source_id: ds2.id,
+    student: 'John "Johnny" Doe',
     subject: 'Mathematics',
     score: 95,
-    scale: 'percentage',
+    max_score: 100,
+    school_year: '2025-2026',
     recorded_at: '2026-04-10T09:00:00',
-    metadata: { teacher: 'Dr. Smith' },
   });
 
   insertRecord('meal', {
     source_id: ds1.id,
     meal_type: 'breakfast',
     items: ['oatmeal', 'coffee', 'banana'],
-    nutrition: { calories: 450, protein: 15, carbs: 65 },
+    calories_est: 450,
     recorded_at: '2026-04-10T07:00:00',
-    metadata: { location: 'home' },
   });
   insertRecord('meal', {
     source_id: ds2.id,
     meal_type: 'lunch',
     items: ['salad', 'sandwich'],
-    nutrition: { calories: 600 },
+    calories_est: 600,
     recorded_at: '2026-04-10T12:00:00',
-    metadata: {},
   });
 
   const vec1 = new Float32Array(EMBEDDING_DIMENSIONS);

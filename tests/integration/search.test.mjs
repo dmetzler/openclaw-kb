@@ -233,7 +233,8 @@ describe('Full-Text Search', () => {
       recorded_at: '2026-04-14T10:00:00Z',
       activity_type: 'morning_run',
       duration_minutes: 30,
-      intensity: 'medium',
+      distance_km: 4.5,
+      calories: 280,
     });
 
     const results = search('morning_run');
@@ -254,9 +255,11 @@ describe('Full-Text Search', () => {
     const record = insertRecord('grade', {
       source_id: source.id,
       recorded_at: '2026-04-14T10:00:00Z',
+      student: 'Jamie Lee',
       subject: 'Mathematics',
       score: 98,
-      scale: 'percent',
+      max_score: 100,
+      school_year: '2025-2026',
     });
 
     const results = search('Mathematics');
