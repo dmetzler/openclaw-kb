@@ -57,11 +57,12 @@ describe('Migration System', () => {
       expect(getSchemaVersion()).toBe('902');
 
       const history = getMigrationHistory();
-      expect(history).toHaveLength(4);
+      expect(history).toHaveLength(5);
       expect(history[0]).toMatchObject({ version: '001', name: '001-generic-data-records.sql' });
-      expect(history[1]).toMatchObject({ version: '900', name: '900-add-tags.sql' });
-      expect(history[2]).toMatchObject({ version: '901', name: '901-add-notes.sql' });
-      expect(history[3]).toMatchObject({ version: '902', name: '902-add-bookmarks.sql' });
+      expect(history[1]).toMatchObject({ version: '002', name: '002-chunks-and-embeddings.sql' });
+      expect(history[2]).toMatchObject({ version: '900', name: '900-add-tags.sql' });
+      expect(history[3]).toMatchObject({ version: '901', name: '901-add-notes.sql' });
+      expect(history[4]).toMatchObject({ version: '902', name: '902-add-bookmarks.sql' });
       expect(history[0].applied_at).toEqual(expect.any(String));
     });
   });
@@ -91,12 +92,12 @@ describe('Migration System', () => {
 
       initDatabase(tmpDb);
       expect(getSchemaVersion()).toBe('902');
-      expect(getMigrationHistory()).toHaveLength(4);
+      expect(getMigrationHistory()).toHaveLength(5);
       closeDatabase();
 
       initDatabase(tmpDb);
       expect(getSchemaVersion()).toBe('902');
-      expect(getMigrationHistory()).toHaveLength(4);
+      expect(getMigrationHistory()).toHaveLength(5);
       closeDatabase();
     });
   });
@@ -122,7 +123,7 @@ describe('Migration System', () => {
       closeDatabase();
       initDatabase(':memory:');
       expect(getSchemaVersion()).toBe('900');
-      expect(getMigrationHistory()).toHaveLength(2);
+      expect(getMigrationHistory()).toHaveLength(3);
     });
   });
 
@@ -140,15 +141,15 @@ describe('Migration System', () => {
       initDatabase(':memory:');
 
       expect(getSchemaVersion()).toBe('900');
-      expect(getMigrationHistory()).toHaveLength(2);
-      expect(getMigrationHistory()[1].name).toBe('900-add-tags.sql');
+      expect(getMigrationHistory()).toHaveLength(3);
+      expect(getMigrationHistory()[2].name).toBe('900-add-tags.sql');
     });
   });
 
   describe('getSchemaVersion', () => {
-    it('returns 001 on fresh database (real migration auto-applied)', () => {
+    it('returns 002 on fresh database (real migrations auto-applied)', () => {
       initDatabase(':memory:');
-      expect(getSchemaVersion()).toBe('001');
+      expect(getSchemaVersion()).toBe('002');
     });
 
     it('returns the latest applied version', () => {
@@ -167,11 +168,12 @@ describe('Migration System', () => {
   });
 
   describe('getMigrationHistory', () => {
-    it('returns only real migration on fresh database', () => {
+    it('returns real migrations on fresh database', () => {
       initDatabase(':memory:');
       const history = getMigrationHistory();
-      expect(history).toHaveLength(1);
+      expect(history).toHaveLength(2);
       expect(history[0]).toMatchObject({ version: '001', name: '001-generic-data-records.sql' });
+      expect(history[1]).toMatchObject({ version: '002', name: '002-chunks-and-embeddings.sql' });
     });
 
     it('returns all applied migrations in order with timestamps', () => {
@@ -187,14 +189,16 @@ describe('Migration System', () => {
       initDatabase(':memory:');
 
       const history = getMigrationHistory();
-      expect(history).toHaveLength(3);
+      expect(history).toHaveLength(4);
       expect(history[0].version).toBe('001');
       expect(history[0].name).toBe('001-generic-data-records.sql');
       expect(history[0].applied_at).toEqual(expect.any(String));
-      expect(history[1].version).toBe('900');
-      expect(history[1].name).toBe('900-add-tags.sql');
-      expect(history[2].version).toBe('901');
-      expect(history[2].name).toBe('901-add-notes.sql');
+      expect(history[1].version).toBe('002');
+      expect(history[1].name).toBe('002-chunks-and-embeddings.sql');
+      expect(history[2].version).toBe('900');
+      expect(history[2].name).toBe('900-add-tags.sql');
+      expect(history[3].version).toBe('901');
+      expect(history[3].name).toBe('901-add-notes.sql');
     });
   });
 });
