@@ -18,6 +18,7 @@ describe('chunkMarkdown', () => {
   it('returns empty array for empty/null/undefined input', () => {
     expect(chunkMarkdown('')).toEqual([]);
     expect(chunkMarkdown('   ')).toEqual([]);
+    expect(chunkMarkdown('\n\n\n')).toEqual([]);
     expect(chunkMarkdown(null)).toEqual([]);
     expect(chunkMarkdown(undefined)).toEqual([]);
   });

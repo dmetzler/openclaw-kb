@@ -139,7 +139,7 @@ export async function convertDocument(filePath, options = {}) {
     );
 
     if (code !== 0) {
-      const errorText = stderr.trim();
+      const errorText = stderr.trim() || 'Unknown conversion error';
       throw new Error(`Failed to convert ${filePath}: ${errorText}`);
     }
 

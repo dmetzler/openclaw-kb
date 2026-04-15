@@ -1,13 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   initDatabase,
   closeDatabase,
 } from '../../src/db.mjs';
-import { ingestUrl } from '../../src/ingest.mjs';
 import { ingestText } from '../../src/ingest.mjs';
-import { fetchUrl } from '../../src/fetcher.mjs';
 import { extract } from '../../src/extractor.mjs';
 import { createPage, regenerateIndex, readPage, findPage } from '../../src/wiki.mjs';
 
@@ -187,6 +185,7 @@ describe('Quickstart Validation (T027)', () => {
       rawDir: TEST_RAW_DIR,
     })).rejects.toThrow('Text must be a non-empty string');
   });
+
 
   it('partial failure is reported in result, not thrown', async () => {
     // LLM returns an entity with empty name to trigger a page creation failure

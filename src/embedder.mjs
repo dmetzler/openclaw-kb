@@ -10,6 +10,24 @@ const AVAILABLE_CACHE_TTL_MS = 30_000;
 let availableCache = null;
 let availableCacheAt = 0;
 
+function _formatDimensionMessage(length) {
+  return `Ollama returned ${length} dimensions; expected ${EMBED_DIMENSIONS}.`;
+}
+
+function _toEmbeddingOrNull(embedding) {
+  if (!Array.isArray(embedding)) {
+    console.warn('Ollama returned an invalid embedding payload.');
+    return null;
+  }
+
+  if (embedding.length !== EMBED_DIMENSIONS) {
+    console.warn(_formatDimensionMessage(embedding.length));
+    return null;
+  }
+
+  return new Float32Array(embedding);
+}
+
 function _buildEmbedPayload(input, options) {
   return {
     model: options?.model ?? OLLAMA_MODEL,
@@ -131,7 +149,7 @@ export async function embed(text, options) {
     return null;
   }
 
-  return new Float32Array(response.embeddings[0]);
+  return _toEmbeddingOrNull(response.embeddings?.[0]);
 }
 
 /**
@@ -150,7 +168,7 @@ export async function embedDocument(text, options) {
     return null;
   }
 
-  return new Float32Array(response.embeddings[0]);
+  return _toEmbeddingOrNull(response.embeddings?.[0]);
 }
 
 /**
@@ -169,7 +187,21 @@ export async function embedBatch(texts, options) {
     return texts.map(() => null);
   }
 
-  return response.embeddings.map((embedding) => new Float32Array(embedding));
+  const embeddings = Array.isArray(response.embeddings) ? response.embeddings : [];
+  const results = Array.from({ length: texts.length }, () => null);
+
+  if (embeddings.length !== texts.length) {
+    console.warn(
+      `Ollama returned ${embeddings.length} embeddings for ${texts.length} inputs. Missing entries will be null.`,
+    );
+  }
+
+  const count = Math.min(texts.length, embeddings.length);
+  for (let index = 0; index < count; index += 1) {
+    results[index] = _toEmbeddingOrNull(embeddings[index]);
+  }
+
+  return results;
 }
 
 /**

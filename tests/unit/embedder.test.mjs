@@ -1,11 +1,18 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 const SUCCESS_EMBEDDINGS = [new Array(768).fill(0.1)];
+const WRONG_DIMENSION_EMBEDDINGS = [new Array(384).fill(0.2)];
 
 const okEmbedResponse = () => ({
   ok: true,
   status: 200,
   json: async () => ({ embeddings: SUCCESS_EMBEDDINGS }),
+});
+
+const okEmbedResponseWith = (embeddings) => ({
+  ok: true,
+  status: 200,
+  json: async () => ({ embeddings }),
 });
 
 const importEmbedder = async () => import('../../src/embedder.mjs');
@@ -78,6 +85,16 @@ describe('embed', () => {
     await expect(promise).resolves.toBeNull();
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
+
+  it('returns null when embedding dimensions are unexpected', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const fetchMock = vi.fn().mockResolvedValue(okEmbedResponseWith(WRONG_DIMENSION_EMBEDDINGS));
+    vi.stubGlobal('fetch', fetchMock);
+    const { embed } = await importEmbedder();
+
+    await expect(embed('hello world')).resolves.toBeNull();
+    expect(warnSpy).toHaveBeenCalled();
+  });
 });
 
 describe('embedDocument', () => {
@@ -122,6 +139,22 @@ describe('embedBatch', () => {
     const result = await embedBatch(['a', 'b']);
 
     expect(result).toEqual([null, null]);
+  });
+
+  it('pads missing embeddings with null', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const partialEmbeddings = [new Array(768).fill(0.1), new Array(768).fill(0.2)];
+    const fetchMock = vi.fn().mockResolvedValue(okEmbedResponseWith(partialEmbeddings));
+    vi.stubGlobal('fetch', fetchMock);
+    const { embedBatch } = await importEmbedder();
+
+    const result = await embedBatch(['doc one', 'doc two', 'doc three']);
+
+    expect(result).toHaveLength(3);
+    expect(result[0]).toBeInstanceOf(Float32Array);
+    expect(result[1]).toBeInstanceOf(Float32Array);
+    expect(result[2]).toBeNull();
+    expect(warnSpy).toHaveBeenCalled();
   });
 });
 

@@ -106,20 +106,25 @@ export async function ingestUrl(url, llm, options = {}) {
 
   // Fetch content — on failure, halt entirely (FR-015)
   const fetchResult = await fetchUrl(url, { timeout: fetchTimeout });
+  const content = fetchResult.content ?? '';
+  const contentWasEmpty = content.trim().length === 0;
 
   // Archive raw source (T016)
   const rawSource = archiveRawSource({
     title: fetchResult.title,
-    content: fetchResult.content,
+    content,
     source: url,
     author: fetchResult.author,
     tags: [],
   }, { rawDir });
 
+
   // Extract entities via LLM
   let extraction;
   try {
-    extraction = await extract(fetchResult.content, llm);
+    extraction = contentWasEmpty
+      ? { entities: [], relations: [], topics: [], summary: '' }
+      : await extract(content, llm);
   } catch (error) {
     // LLM failure — raw file is archived, log the failure (FR-018)
     appendLog({
@@ -140,6 +145,7 @@ export async function ingestUrl(url, llm, options = {}) {
       pagesFailed: [],
       entitiesCreated: 0,
       relationsCreated: 0,
+      chunks: { total: 0, embedded: 0 },
     };
   }
 
@@ -193,7 +199,7 @@ export async function ingestUrl(url, llm, options = {}) {
   let embeddedChunks = 0;
   const chunksToEmbed = [];
   const entityKgIds = [...entityKgMap.values()];
-  const chunks = chunkMarkdown(fetchResult.content, { source: url });
+  const chunks = chunkMarkdown(content, { source: url });
 
   for (const kgId of entityKgIds) {
     deleteChunksForEntity(kgId);
@@ -234,7 +240,11 @@ export async function ingestUrl(url, llm, options = {}) {
     pagesCreated,
     pagesUpdated,
     pagesFailed: pagesFailed.length > 0 ? pagesFailed : undefined,
-    note: extraction.entities.length === 0 ? 'No entities extracted' : undefined,
+    note: contentWasEmpty
+      ? 'Empty document; no entities extracted'
+      : extraction.entities.length === 0
+        ? 'No entities extracted'
+        : undefined,
   }, { wikiDir });
 
   return {

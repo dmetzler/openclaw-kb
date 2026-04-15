@@ -122,7 +122,7 @@ export async function ingestFile(filePath, llm, options = {}) {
 
   _logVerbose(verbose, `Converting ${filePath}...`);
   const conversion = await convertDocument(filePath, options);
-  const markdown = conversion.markdown;
+  const markdown = conversion.markdown ?? '';
 
   const title = _extractTitle(markdown, filePath);
 
@@ -132,6 +132,28 @@ export async function ingestFile(filePath, llm, options = {}) {
     content: markdown,
     source: filePath,
   }, { rawDir });
+
+  if (markdown.trim().length === 0) {
+    appendLog({
+      timestamp: new Date().toISOString(),
+      sourceType: 'text',
+      source: filePath,
+      rawFile: rawSource.fileName,
+      pagesCreated: [],
+      pagesUpdated: [],
+      note: 'Empty document; no entities extracted',
+    }, { wikiDir });
+
+    return {
+      title,
+      source: filePath,
+      format,
+      entities: [],
+      relations: [],
+      chunks: { total: 0, embedded: 0 },
+      pages: [],
+    };
+  }
 
   _logVerbose(verbose, 'Extracting entities...');
   let extraction;

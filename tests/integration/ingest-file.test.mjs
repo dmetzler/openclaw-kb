@@ -161,4 +161,19 @@ describe('ingestFile', () => {
     expect(result.entities).toEqual([]);
     expect(result.pages).toEqual([]);
   });
+
+  it('handles empty markdown without errors', async () => {
+    const emptyPath = join(rawDir, 'empty.md');
+    writeFileSync(emptyPath, '   ');
+
+    const result = await ingestFile(emptyPath, mockLlm, {
+      wikiDir,
+      rawDir,
+      skipEmbedding: true,
+    });
+
+    expect(result.entities).toEqual([]);
+    expect(result.pages).toEqual([]);
+    expect(result.chunks).toEqual({ total: 0, embedded: 0 });
+  });
 });

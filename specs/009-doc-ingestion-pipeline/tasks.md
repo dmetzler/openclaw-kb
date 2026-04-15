@@ -99,7 +99,7 @@
 
 ### Tests for User Story 3
 
-- [ ] T017 [P] [US3] Create integration test `tests/integration/url-chunking.test.mjs` — test ingestUrl produces all existing outputs plus chunk records and embeddings (mock HTTP fetch + mock Ollama); test chunks use heading-boundary method (not HierarchicalChunker); test re-ingestion replaces chunks; test graceful degradation when Ollama unavailable (chunks stored, no embeddings, no error).
+- [X] T017 [P] [US3] Create integration test `tests/integration/url-chunking.test.mjs` — test ingestUrl produces all existing outputs plus chunk records and embeddings (mock HTTP fetch + mock Ollama); test chunks use heading-boundary method (not HierarchicalChunker); test re-ingestion replaces chunks; test graceful degradation when Ollama unavailable (chunks stored, no embeddings, no error).
 
 **Checkpoint**: URL ingestion enhanced with chunking — no existing behavior broken.
 
@@ -113,11 +113,11 @@
 
 ### Implementation for User Story 4
 
-- [ ] T018 [US4] Create `src/backfill.mjs` — implement `backfillWikiPages(options?)` per contracts: validate Ollama reachable (exit with error if not, FR-020); scan `wiki/` directory for `.md` files; for each, check if entity has chunks (skip if yes); read Markdown content; `chunker.chunkMarkdown()`; `insertChunk()` per chunk; `embedder.embedBatch()` → `upsertChunkEmbedding()` per chunk; report progress `"Processing 5/42: wiki/entities/python.md"`. Support `--db`, `--wiki`, `--dry-run`, `--verbose` CLI flags. Support programmatic usage via exported function. Return `{processed, skipped, failed, total}`.
+- [X] T018 [US4] Create `src/backfill.mjs` — implement `backfillWikiPages(options?)` per contracts: validate Ollama reachable (exit with error if not, FR-020); scan `wiki/` directory for `.md` files; for each, check if entity has chunks (skip if yes); read Markdown content; `chunker.chunkMarkdown()`; `insertChunk()` per chunk; `embedder.embedBatch()` → `upsertChunkEmbedding()` per chunk; report progress `"Processing 5/42: wiki/entities/python.md"`. Support `--db`, `--wiki`, `--dry-run`, `--verbose` CLI flags. Support programmatic usage via exported function. Return `{processed, skipped, failed, total}`.
 
 ### Tests for User Story 4
 
-- [ ] T019 [P] [US4] Create integration test `tests/integration/backfill.test.mjs` — create temporary wiki directory with sample .md files; seed database with entities (some with chunks, some without); test backfill processes only pages without chunks; test skip behavior for already-chunked pages; test progress reporting; test dry-run creates no database changes; test Ollama unavailable exits with error (mock ECONNREFUSED).
+- [X] T019 [P] [US4] Create integration test `tests/integration/backfill.test.mjs` — create temporary wiki directory with sample .md files; seed database with entities (some with chunks, some without); test backfill processes only pages without chunks; test skip behavior for already-chunked pages; test progress reporting; test dry-run creates no database changes; test Ollama unavailable exits with error (mock ECONNREFUSED).
 
 **Checkpoint**: Backfill script works for existing wiki content.
 
@@ -163,9 +163,9 @@
 
 **Purpose**: Edge cases, error handling robustness, documentation
 
-- [ ] T024 [P] Handle edge cases across the pipeline: empty/whitespace-only documents (zero chunks scenario); corrupted/encrypted PDFs (docling error handling); Ollama returns wrong embedding dimensions (validation in embedder); partial embedding failure (some chunks embedded, others not — store what succeeds); very large documents (100+ pages, thousands of chunks — sequential processing, no OOM)
-- [ ] T025 [P] Validate `specs/009-doc-ingestion-pipeline/quickstart.md` end-to-end — run each code example in quickstart.md and verify it works: ingestFile, ingestUrl with chunks, searchSemantic chunk-level results, backfill script CLI and programmatic usage
-- [ ] T026 Run full test suite (`npx vitest run`) and verify ≥80% line coverage for new files; fix any failing tests
+- [X] T024 [P] Handle edge cases across the pipeline: empty/whitespace-only documents (zero chunks scenario); corrupted/encrypted PDFs (docling error handling); Ollama returns wrong embedding dimensions (validation in embedder); partial embedding failure (some chunks embedded, others not — store what succeeds); very large documents (100+ pages, thousands of chunks — sequential processing, no OOM)
+- [X] T025 [P] Validate `specs/009-doc-ingestion-pipeline/quickstart.md` end-to-end — run each code example in quickstart.md and verify it works: ingestFile, ingestUrl with chunks, searchSemantic chunk-level results, backfill script CLI and programmatic usage
+- [X] T026 Run full test suite (`npx vitest run`) and verify ≥80% line coverage for new files; fix any failing tests
 
 ---
 
