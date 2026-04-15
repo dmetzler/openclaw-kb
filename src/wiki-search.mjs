@@ -15,10 +15,13 @@
 import {
   search as dbSearch,
   findNearestVectors,
+  findNearestChunks,
   traverseGraph,
   getEntity,
+  getChunkWithEntity,
   queryRecords,
 } from './db.mjs';
+import { embed } from './embedder.mjs';
 
 // ---------------------------------------------------------------------------
 // Internal helper functions
@@ -336,7 +339,7 @@ export function searchData(query, recordType) {
  *
  * @param {string} query - Search query text.
  * @param {SemanticSearchOptions} [options={}] - Semantic search configuration.
- * @returns {SearchResult[]} Results with tier 3, ordered by combined score.
+ * @returns {Promise<SearchResult[]>} Results with tier 3, ordered by combined score.
  *
  * @example
  * // FTS5 + vector combined
@@ -351,7 +354,7 @@ export function searchData(query, recordType) {
  * // FTS5 only (no vector)
  * const results = searchSemantic('exact keyword match');
  */
-export function searchSemantic(query, options = {}) {
+export async function searchSemantic(query, options = {}) {
   const trimmed = validateQuery(query);
   if (!trimmed) return [];
 
@@ -362,6 +365,15 @@ export function searchSemantic(query, options = {}) {
     ? options.minScore
     : 0.0;
   const queryVector = options.queryVector;
+  let autoEmbedding = null;
+  if (!queryVector) {
+    try {
+      autoEmbedding = await embed(trimmed);
+    } catch (error) {
+      console.warn('searchSemantic embed error:', error?.message ?? error);
+      autoEmbedding = null;
+    }
+  }
 
   try {
     // Step 1: FTS5 search — build a map keyed by source_table:source_id
@@ -408,10 +420,12 @@ export function searchSemantic(query, options = {}) {
               combinedMap.set(key, {
                 id: vecHit.entity_id,
                 name: entity?.name ?? `Entity ${vecHit.entity_id}`,
+                type: entity?.type ?? null,
                 snippet: entity ? JSON.stringify(entity.metadata) : '',
                 source_table: 'entities',
                 ftsScore: null,
                 vecScore,
+                chunk: null,
               });
             }
           }
@@ -419,6 +433,40 @@ export function searchSemantic(query, options = {}) {
           // Graceful fallback: vec0 failure → FTS-only
           console.warn('searchSemantic vec0 error:', vecError?.message ?? vecError);
         }
+      }
+    } else if (autoEmbedding) {
+      try {
+        const vecResults = findNearestChunks(autoEmbedding, maxResults);
+        hasVec = vecResults.length > 0;
+        for (const vecHit of vecResults) {
+          const vecScore = vecDistanceToSimilarity(vecHit.distance);
+          const chunkWithEntity = getChunkWithEntity(vecHit.chunk_id);
+          if (!chunkWithEntity) continue;
+          const { chunk, entity } = chunkWithEntity;
+          const key = `chunks:${chunk.id}`;
+          const existing = combinedMap.get(key);
+          if (existing) {
+            existing.vecScore = vecScore;
+          } else {
+            combinedMap.set(key, {
+              id: entity.id,
+              name: entity.name,
+              type: entity.type,
+              snippet: chunk.content.slice(0, 200),
+              source_table: 'entities',
+              ftsScore: null,
+              vecScore,
+              chunk: {
+                id: chunk.id,
+                text: chunk.content,
+                section: chunk.metadata?.section ?? [],
+                chunkIndex: chunk.chunk_index,
+              },
+            });
+          }
+        }
+      } catch (vecError) {
+        console.warn('searchSemantic vec_chunks error:', vecError?.message ?? vecError);
       }
     }
 
@@ -446,13 +494,21 @@ export function searchSemantic(query, options = {}) {
       // Filter by minScore
       if (combinedScore < minScore) continue;
 
+      const source = entry.vecScore !== null && entry.ftsScore !== null
+        ? 'combined'
+        : entry.vecScore !== null
+          ? 'vec_chunks'
+          : 'fts5';
       results.push({
         id: entry.id,
         name: entry.name,
+        type: entry.type ?? null,
         snippet: entry.snippet,
         tier: 3,
+        source,
         source_table: entry.source_table,
         score: combinedScore,
+        chunk: entry.chunk ?? null,
         metadata: {
           fts_score: entry.ftsScore,
           vec_score: entry.vecScore,
@@ -487,7 +543,7 @@ export function searchSemantic(query, options = {}) {
  *
  * @param {string} query - Search query text.
  * @param {SearchOptions} [options={}] - Search configuration.
- * @returns {SearchResult[]} Deduplicated results, length ≤ maxResults.
+ * @returns {Promise<SearchResult[]>} Deduplicated results, length ≤ maxResults.
  *
  * @example
  * const results = search('Node.js', {
@@ -496,7 +552,7 @@ export function searchSemantic(query, options = {}) {
  *   includeScores: true
  * });
  */
-export function search(query, options = {}) {
+export async function search(query, options = {}) {
   const trimmed = validateQuery(query);
   if (!trimmed) return [];
 
@@ -531,7 +587,7 @@ export function search(query, options = {}) {
 
   if (tiers.includes(3)) {
     try {
-      const semanticResults = searchSemantic(trimmed);
+      const semanticResults = await searchSemantic(trimmed);
       if (semanticResults.length > 0) {
         resultsByTier.set(3, semanticResults);
       }

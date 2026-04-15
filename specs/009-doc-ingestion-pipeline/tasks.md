@@ -59,7 +59,7 @@
 
 ### Implementation for User Story 1
 
-- [ ] T012 [US1] Create `src/ingest-file.mjs` — implement `ingestFile(filePath, llm, options?)` orchestrator: validate file exists + format supported → `converter.convertDocument()` → archive raw content to `raw/` → `extractor.extract(markdown, llm)` for entity extraction → create/update wiki pages → create/update KG entities and relations → `deleteChunksForEntity()` for re-ingestion → create chunks (use docling chunks if available via `converter.chunks`, else `chunker.chunkMarkdown()`) → `insertChunk()` per chunk → `embedder.embedBatch()` → `upsertChunkEmbedding()` per chunk (graceful if Ollama unavailable) → return `IngestResult` per contracts/module-apis.md. Support `options.skipEmbedding` and `options.verbose` (progress output).
+- [X] T012 [US1] Create `src/ingest-file.mjs` — implement `ingestFile(filePath, llm, options?)` orchestrator: validate file exists + format supported → `converter.convertDocument()` → archive raw content to `raw/` → `extractor.extract(markdown, llm)` for entity extraction → create/update wiki pages → create/update KG entities and relations → `deleteChunksForEntity()` for re-ingestion → create chunks (use docling chunks if available via `converter.chunks`, else `chunker.chunkMarkdown()`) → `insertChunk()` per chunk → `embedder.embedBatch()` → `upsertChunkEmbedding()` per chunk (graceful if Ollama unavailable) → return `IngestResult` per contracts/module-apis.md. Support `options.skipEmbedding` and `options.verbose` (progress output).
 
 ### Tests for User Story 1
 
@@ -77,7 +77,7 @@
 
 ### Implementation for User Story 2
 
-- [ ] T014 [US2] Update `src/wiki-search.mjs` — modify `searchSemantic(query, options)` to: call `embedder.embed(query)` internally when `queryVector` not provided (backward compat); search `vec_chunks` via `db.findNearestChunks()` instead of `db.findNearestVectors()`; return chunk-level results with `{id, name, type, score, source, chunk: {id, text, section, chunkIndex}}` per contracts; fall back to FTS5-only if Ollama unavailable (FR-016); interleave results by relevance across entities (not grouped by entity).
+- [X] T014 [US2] Update `src/wiki-search.mjs` — modify `searchSemantic(query, options)` to: call `embedder.embed(query)` internally when `queryVector` not provided (backward compat); search `vec_chunks` via `db.findNearestChunks()` instead of `db.findNearestVectors()`; return chunk-level results with `{id, name, type, score, source, chunk: {id, text, section, chunkIndex}}` per contracts; fall back to FTS5-only if Ollama unavailable (FR-016); interleave results by relevance across entities (not grouped by entity).
 
 ### Tests for User Story 2
 

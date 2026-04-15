@@ -59,29 +59,28 @@ afterEach(() => {
 });
 
 describe('bm25ToScore', () => {
-  it('maps negative ranks from FTS results into bounded scores', () => {
+  it('maps negative ranks from FTS results into bounded scores', async () => {
     seedKGEntity('Hybrid Search Topic', 'concept', { description: 'fts rank test' });
 
-    const results = searchSemantic('Hybrid');
+    const results = await searchSemantic('Hybrid');
 
     expect(results.length).toBeGreaterThan(0);
     expect(results[0].score).toBeGreaterThan(0);
     expect(results[0].score).toBeLessThanOrEqual(1);
   });
 
-  it('handles non-finite ranks without crashing on edge queries', () => {
-    expect(() => searchSemantic('""')).not.toThrow();
-    expect(searchSemantic('""')).toEqual([]);
+  it('handles non-finite ranks without crashing on edge queries', async () => {
+    await expect(searchSemantic('""')).resolves.toEqual([]);
   });
 });
 
 describe('vecDistanceToSimilarity', () => {
-  it('converts distance 0 to similarity 1.0', () => {
+  it('converts distance 0 to similarity 1.0', async () => {
     const entity = seedKGEntity('Vector Zero', 'concept');
     const vector = unitVector(0);
     seedEmbedding(entity.id, vector);
 
-    const [result] = searchSemantic('vector', {
+    const [result] = await searchSemantic('vector', {
       queryVector: vector,
       ftsWeight: 0,
       vectorWeight: 1,
@@ -90,7 +89,7 @@ describe('vecDistanceToSimilarity', () => {
     expect(result.metadata.vec_score).toBeCloseTo(1.0, 5);
   });
 
-  it('converts distance 0.5 to similarity 0.5', () => {
+  it('converts distance 0.5 to similarity 0.5', async () => {
     const entity = seedKGEntity('Vector Half', 'concept');
     const queryVector = unitVector(0);
     const entityVector = new Array(EMBEDDING_DIMENSIONS).fill(0);
@@ -98,7 +97,7 @@ describe('vecDistanceToSimilarity', () => {
     entityVector[1] = Math.sqrt(3) / 2;
     seedEmbedding(entity.id, entityVector);
 
-    const [result] = searchSemantic('vector', {
+    const [result] = await searchSemantic('vector', {
       queryVector,
       ftsWeight: 0,
       vectorWeight: 1,
@@ -107,13 +106,13 @@ describe('vecDistanceToSimilarity', () => {
     expect(result.metadata.vec_score).toBeCloseTo(0.5, 1);
   });
 
-  it('converts distance 1.0 to similarity 0.0', () => {
+  it('converts distance 1.0 to similarity 0.0', async () => {
     const entity = seedKGEntity('Vector Orthogonal', 'concept');
     const queryVector = unitVector(0);
     const entityVector = unitVector(1);
     seedEmbedding(entity.id, entityVector);
 
-    const [result] = searchSemantic('vector', {
+    const [result] = await searchSemantic('vector', {
       queryVector,
       ftsWeight: 0,
       vectorWeight: 1,
@@ -142,21 +141,21 @@ describe('depthToScore', () => {
 });
 
 describe('deduplicateResults', () => {
-  it('keeps KG results when entities appear in semantic tier', () => {
+  it('keeps KG results when entities appear in semantic tier', async () => {
     const entity = seedKGEntity('Sleep', 'topic');
     seedEmbedding(entity.id, randomVector());
 
-    const results = search('Sleep', { includeScores: true });
+    const results = await search('Sleep', { includeScores: true });
 
     expect(results.filter((result) => result.name === 'Sleep')).toHaveLength(1);
     expect(results[0].tier).toBe(1);
   });
 
-  it('returns data records alongside entities with same name', () => {
+  it('returns data records alongside entities with same name', async () => {
     seedKGEntity('Sleep', 'topic');
     seedDataRecord('sleep', { summary: 'sleep tracking' }, '2026-04-14T12:00:00Z');
 
-    const results = search('sleep', { includeScores: true });
+    const results = await search('sleep', { includeScores: true });
 
     const sourceTables = results.map((result) => result.source_table);
     expect(sourceTables).toEqual(expect.arrayContaining(['entities', 'data_records']));
@@ -164,14 +163,14 @@ describe('deduplicateResults', () => {
 });
 
 describe('User Story 1: Unified Search', () => {
-  it('returns results from each tier and orders KG first', () => {
+  it('returns results from each tier and orders KG first', async () => {
     seedKGEntity('Node.js', 'technology');
     seedDataRecord('activity', { activity_type: 'Node workshop' }, '2026-04-14T10:00:00Z');
 
     const kgResults = searchKG('Node');
     const dataResults = searchData('Node');
-    const semanticResults = searchSemantic('Node');
-    const results = search('Node', { includeScores: true });
+    const semanticResults = await searchSemantic('Node');
+    const results = await search('Node', { includeScores: true });
 
     expect(kgResults.length).toBeGreaterThan(0);
     expect(dataResults.length).toBeGreaterThan(0);
@@ -179,41 +178,41 @@ describe('User Story 1: Unified Search', () => {
     expect(results[0].tier).toBe(1);
   });
 
-  it('deduplicates duplicate entities across tiers', () => {
+  it('deduplicates duplicate entities across tiers', async () => {
     seedKGEntity('Python', 'technology');
 
-    const results = search('Python', { includeScores: true });
+    const results = await search('Python', { includeScores: true });
 
     expect(results.filter((result) => result.name === 'Python')).toHaveLength(1);
   });
 
-  it('returns [] when database is empty', () => {
-    expect(search('anything')).toEqual([]);
+  it('returns [] when database is empty', async () => {
+    await expect(search('anything')).resolves.toEqual([]);
   });
 
-  it('returns semantic-only results when tiers filter to semantic', () => {
+  it('returns semantic-only results when tiers filter to semantic', async () => {
     seedKGEntity('Semantic Only', 'note');
 
-    const results = search('Semantic', { tiers: [3], includeScores: true });
+    const results = await search('Semantic', { tiers: [3], includeScores: true });
 
     expect(results.length).toBeGreaterThan(0);
     expect(results.every((result) => result.tier === 3)).toBe(true);
   });
 
-  it('filters tiers and excludes data records when tiers are [1, 3]', () => {
+  it('filters tiers and excludes data records when tiers are [1, 3]', async () => {
     seedKGEntity('Tier Filtering', 'note');
     seedDataRecord('health_metric', { metric_type: 'Unrelated Metric', value: 1 }, '2026-04-14T10:00:00Z');
 
-    const results = search('Tier', { tiers: [1, 3], includeScores: true });
+    const results = await search('Tier', { tiers: [1, 3], includeScores: true });
 
     expect(results.some((result) => result.source_table === 'data_records')).toBe(false);
   });
 
-  it('includeScores toggles score/tier fields', () => {
+  it('includeScores toggles score/tier fields', async () => {
     seedKGEntity('Include Scores', 'note');
 
-    const withScores = search('Include', { includeScores: true });
-    const withoutScores = search('Include', { includeScores: false });
+    const withScores = await search('Include', { includeScores: true });
+    const withoutScores = await search('Include', { includeScores: false });
 
     expect(withScores[0]).toHaveProperty('score');
     expect(withScores[0]).toHaveProperty('tier');
@@ -221,12 +220,12 @@ describe('User Story 1: Unified Search', () => {
     expect(withoutScores[0]).not.toHaveProperty('tier');
   });
 
-  it('respects maxResults', () => {
+  it('respects maxResults', async () => {
     for (let index = 1; index <= 35; index += 1) {
       seedKGEntity(`Max Results ${index}`, 'note');
     }
 
-    const results = search('Max', { maxResults: 5 });
+    const results = await search('Max', { maxResults: 5 });
 
     expect(results.length).toBeLessThanOrEqual(5);
   });
@@ -293,13 +292,13 @@ describe('User Story 2: Knowledge Graph Search', () => {
 });
 
 describe('User Story 3: Semantic Search', () => {
-  it('combines FTS and vector scores into weighted results', () => {
+  it('combines FTS and vector scores into weighted results', async () => {
     const entity = seedKGEntity('Artificial Intelligence', 'concept');
     const queryVector = unitVector(0);
     const entityVector = unitVector(0);
     seedEmbedding(entity.id, entityVector);
 
-    const [result] = searchSemantic('Artificial Intelligence', {
+    const [result] = await searchSemantic('Artificial Intelligence', {
       queryVector,
       ftsWeight: 0.6,
       vectorWeight: 0.4,
@@ -310,7 +309,7 @@ describe('User Story 3: Semantic Search', () => {
     expect(result.metadata.combined_method).toBe('weighted');
   });
 
-  it('adjusts ranking when weights shift between FTS and vector', () => {
+  it('adjusts ranking when weights shift between FTS and vector', async () => {
     const highFts = seedKGEntity('Alpha Alpha Alpha', 'concept');
     const highVec = seedKGEntity('Alpha', 'concept');
     const queryVector = unitVector(0);
@@ -318,12 +317,12 @@ describe('User Story 3: Semantic Search', () => {
     seedEmbedding(highFts.id, farVector);
     seedEmbedding(highVec.id, queryVector);
 
-    const ftsHeavy = searchSemantic('Alpha', {
+    const ftsHeavy = await searchSemantic('Alpha', {
       queryVector,
       ftsWeight: 1,
       vectorWeight: 0,
     });
-    const vecHeavy = searchSemantic('Alpha', {
+    const vecHeavy = await searchSemantic('Alpha', {
       queryVector,
       ftsWeight: 0,
       vectorWeight: 1,
@@ -333,35 +332,35 @@ describe('User Story 3: Semantic Search', () => {
     expect(vecHeavy[0].id).toBe(highVec.id);
   });
 
-  it('filters by minScore', () => {
+  it('filters by minScore', async () => {
     seedKGEntity('Filtering Score', 'note');
 
-    const results = searchSemantic('Filtering', { minScore: 1.1 });
+    const results = await searchSemantic('Filtering', { minScore: 1.1 });
 
     expect(results).toEqual([]);
   });
 
-  it('falls back to FTS-only when queryVector is missing', () => {
+  it('falls back to FTS-only when queryVector is missing', async () => {
     seedKGEntity('Fts Only', 'note');
 
-    const [result] = searchSemantic('Fts');
+    const [result] = await searchSemantic('Fts');
 
     expect(result.metadata.combined_method).toBe('fts_only');
   });
 
-  it('returns deterministic scores for repeated queries', () => {
+  it('returns deterministic scores for repeated queries', async () => {
     seedKGEntity('Deterministic', 'note');
 
-    const first = searchSemantic('Deterministic');
-    const second = searchSemantic('Deterministic');
+    const first = await searchSemantic('Deterministic');
+    const second = await searchSemantic('Deterministic');
 
     expect(second).toEqual(first);
   });
 
-  it('falls back to FTS-only when vector dimensions are wrong', () => {
+  it('falls back to FTS-only when vector dimensions are wrong', async () => {
     seedKGEntity('Wrong Vector', 'note');
 
-    const results = searchSemantic('Wrong', { queryVector: [1, 2, 3] });
+    const results = await searchSemantic('Wrong', { queryVector: [1, 2, 3] });
 
     expect(results[0].metadata.combined_method).toBe('fts_only');
   });
@@ -431,10 +430,10 @@ describe('User Story 5: Priority Rules Template', () => {
     expect(template.length).toBeLessThan(8000);
   });
 
-  it('can be concatenated into a prompt with search results', () => {
+  it('can be concatenated into a prompt with search results', async () => {
     const template = readFileSync('templates/priority-rules.md', 'utf-8');
     seedKGEntity('Prompt Test', 'note');
-    const results = search('Prompt', { includeScores: true });
+    const results = await search('Prompt', { includeScores: true });
 
     const prompt = `${template}\n\nSearch results:\n${JSON.stringify(results, null, 2)}`;
 
@@ -444,44 +443,44 @@ describe('User Story 5: Priority Rules Template', () => {
 });
 
 describe('Edge Cases', () => {
-  it('returns [] for empty or whitespace queries', () => {
-    expect(search('')).toEqual([]);
-    expect(search('   ')).toEqual([]);
+  it('returns [] for empty or whitespace queries', async () => {
+    await expect(search('')).resolves.toEqual([]);
+    await expect(search('   ')).resolves.toEqual([]);
     expect(searchKG('')).toEqual([]);
     expect(searchData('   ')).toEqual([]);
-    expect(searchSemantic('')).toEqual([]);
+    await expect(searchSemantic('')).resolves.toEqual([]);
   });
 
-  it('handles FTS5 special characters without throwing', () => {
+  it('handles FTS5 special characters without throwing', async () => {
     seedKGEntity('C++ Guide', 'note');
 
     expect(() => search('C++ "hello world" OR *wildcard*')).not.toThrow();
-    expect(() => searchSemantic('C++ "hello world" OR *wildcard*')).not.toThrow();
+    await expect(searchSemantic('C++ "hello world" OR *wildcard*')).resolves.toBeDefined();
   });
 
-  it('defaults invalid maxResults gracefully', () => {
+  it('defaults invalid maxResults gracefully', async () => {
     for (let index = 1; index <= 25; index += 1) {
       seedKGEntity(`Default Limit ${index}`, 'note');
     }
 
-    const results = search('Default', { maxResults: -5 });
+    const results = await search('Default', { maxResults: -5 });
 
     expect(results).toHaveLength(20);
   });
 
-  it('ignores invalid tier numbers', () => {
+  it('ignores invalid tier numbers', async () => {
     seedKGEntity('Tier Clamp', 'note');
 
-    const results = search('Tier', { tiers: [5, 99], includeScores: true });
+    const results = await search('Tier', { tiers: [5, 99], includeScores: true });
 
     expect(results.length).toBeGreaterThan(0);
     expect(results[0].tier).toBe(1);
   });
 
-  it('falls back to FTS-only on wrong vector dimensions', () => {
+  it('falls back to FTS-only on wrong vector dimensions', async () => {
     seedKGEntity('Vector Fallback', 'note');
 
-    const results = searchSemantic('Vector', { queryVector: [1, 2, 3] });
+    const results = await searchSemantic('Vector', { queryVector: [1, 2, 3] });
 
     expect(results[0].metadata.combined_method).toBe('fts_only');
   });
@@ -501,7 +500,7 @@ describe('Edge Cases', () => {
 });
 
 describe('Performance', () => {
-  it('searches across large datasets under 200ms', () => {
+  it('searches across large datasets under 200ms', async () => {
     for (let index = 1; index <= 1000; index += 1) {
       seedKGEntity(`Perf Entity ${index}`, 'note');
     }
@@ -516,7 +515,7 @@ describe('Performance', () => {
     }
 
     const start = performance.now();
-    const results = search('Perf', { includeScores: true });
+    const results = await search('Perf', { includeScores: true });
     const elapsed = performance.now() - start;
 
     expect(results.length).toBeGreaterThan(0);
@@ -538,15 +537,15 @@ describe('Performance', () => {
 });
 
 describe('Polish', () => {
-  it('executes quickstart.md examples without errors', () => {
+  it('executes quickstart.md examples without errors', async () => {
     seedKGEntity('Node.js', 'technology');
     seedDataRecord('health_metric', { metric_type: 'blood pressure', value: 120 }, '2026-04-14T08:30:00Z');
 
-    expect(() => search('Node.js')).not.toThrow();
-    expect(() => search('Node.js', { maxResults: 10, tiers: [1, 3], includeScores: true })).not.toThrow();
+    await expect(search('Node.js')).resolves.toBeDefined();
+    await expect(search('Node.js', { maxResults: 10, tiers: [1, 3], includeScores: true })).resolves.toBeDefined();
     expect(() => searchKG('Node.js')).not.toThrow();
     expect(() => searchData('blood pressure', 'health_metric')).not.toThrow();
-    expect(() => searchSemantic('artificial intelligence')).not.toThrow();
+    await expect(searchSemantic('artificial intelligence')).resolves.toBeDefined();
   });
 
   it('documents exports with @param/@returns/@example blocks', () => {
