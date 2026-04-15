@@ -62,7 +62,7 @@ Auto-populated by triggers on INSERT/UPDATE/DELETE of `entities` and `data_recor
 | Column | Type | Notes |
 |--------|------|-------|
 | entity_id | INTEGER | PRIMARY KEY, references entities(id) |
-| embedding | float[384] | distance_metric=cosine |
+| embedding | float[768] | distance_metric=cosine |
 
 ## Data Flow
 
@@ -167,7 +167,7 @@ Returned by all four public functions. Shape is consistent regardless of which t
  * @property {number}         [vectorWeight=0.3]  - Vector similarity weight (0–1)
  * @property {number}         [minScore=0.0]      - Minimum combined score threshold
  * @property {number}         [maxResults=20]     - Maximum results
- * @property {Float32Array|number[]} [queryVector] - Pre-computed query embedding (384-dim)
+ * @property {Float32Array|number[]} [queryVector] - Pre-computed query embedding (768-dim)
  */
 ```
 
@@ -212,5 +212,5 @@ This module is stateless. No data modifications, no caching, no session state. E
 | `options.tiers` | Array of 1, 2, 3 | Ignore invalid tier numbers |
 | `options.ftsWeight` + `vectorWeight` | Each 0–1, sum need not equal 1 | Clamp to [0, 1] |
 | `options.minScore` | Number ≥ 0 | Default to 0.0 if negative |
-| `options.queryVector` | Float32Array or number[] of length 384, or undefined | Skip vector search if absent |
+| `options.queryVector` | Float32Array or number[] of length 768, or undefined | Skip vector search if absent |
 | `recordType` (searchData) | String, optional | Omit filter if not provided |

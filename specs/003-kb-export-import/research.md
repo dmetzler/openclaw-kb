@@ -25,7 +25,7 @@
 
 **Decision**: Use `JSON.stringify()` for embedding vectors. JavaScript's `JSON.stringify` on a `Float32Array` converted to a regular array preserves the exact float values as they appear after float32 rounding.
 
-**Rationale**: The spec requires "vector values in `embeddings.jsonl` match to full floating-point precision" for round-trip identity. Since all vectors in the system are `Float32Array` (384-dimensional, cosine distance), the precision boundary is float32. `JSON.stringify(Array.from(float32Array))` produces a deterministic JSON array of numbers. On re-import, `new Float32Array(jsonArray)` recovers the exact same bits because the JSON numbers are decimal representations of float32 values.
+**Rationale**: The spec requires "vector values in `embeddings.jsonl` match to full floating-point precision" for round-trip identity. Since all vectors in the system are `Float32Array` (768-dimensional, cosine distance), the precision boundary is float32. `JSON.stringify(Array.from(float32Array))` produces a deterministic JSON array of numbers. On re-import, `new Float32Array(jsonArray)` recovers the exact same bits because the JSON numbers are decimal representations of float32 values.
 
 **Alternatives considered**:
 - Base64 encoding of raw Float32Array buffer — compact but not human-readable, breaks Git diff friendliness (SC-006), violates SC-004 (human-readable JSONL).

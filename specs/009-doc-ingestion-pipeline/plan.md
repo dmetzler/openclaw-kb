@@ -16,7 +16,7 @@ Major enhancement to the OpenClaw KB ingestion pipeline: support for arbitrary d
 **Target Platform**: Linux server (N150), also macOS for development
 **Project Type**: CLI / library (programmatic function calls + CLI scripts)
 **Performance Goals**: Embedding generation ~200–500ms per chunk on CPU (Ollama on N150). Docling conversion ~6 min per 9-page PDF (acceptable for batch). Chunk-level KNN search <100ms for k=20 over 10K chunks.
-**Constraints**: No GPU required (CPU inference via Ollama). Graceful degradation when Ollama or docling unavailable. Single-threaded sequential processing for backfill (simplicity over speed). Embedding dimension mismatch: existing `vec_embeddings` uses 384-dim; new `vec_chunks` uses 768-dim (intentional — different models).
+**Constraints**: No GPU required (CPU inference via Ollama). Graceful degradation when Ollama or docling unavailable. Single-threaded sequential processing for backfill (simplicity over speed). Both `vec_embeddings` and `vec_chunks` use 768-dim embeddings (nomic-embed-text native output).
 **Scale/Scope**: Hundreds of wiki pages, thousands of chunks after backfill. Documents up to 100+ pages producing thousands of chunks per document. 5 new source modules, 1 Python helper script, 1 SQL migration, ~8 test files.
 
 ## Constitution Check
@@ -121,5 +121,5 @@ tests/
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
 |-----------|------------|-------------------------------------|
-| Two embedding dimensions (384 for `vec_embeddings`, 768 for `vec_chunks`) | nomic-embed-text native output is 768-dim; existing entity embeddings use 384-dim from a different model/era | Rewriting all existing 384-dim embeddings would break backward compatibility and require re-embedding all entities. The two tables serve different purposes (entity-level vs chunk-level). |
+| Two separate vector tables (`vec_embeddings` and `vec_chunks`) | Entity-level and chunk-level embeddings serve different search purposes (whole-entity similarity vs passage-level retrieval) | A single table would require storing both entity_id and chunk_id, complicating queries. Separate tables allow independent KNN searches. Both use 768-dim (nomic-embed-text). |
 | Python subprocess dependency (docling) | No Node.js library can convert PDF/DOCX/PPTX to structured Markdown with table/heading/section preservation | Pure Node.js PDF parsers (pdf-parse, pdfjs) extract raw text without structural information. docling is the only mature solution for multi-format structured conversion. |

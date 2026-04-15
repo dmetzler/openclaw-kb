@@ -230,19 +230,19 @@ Vector storage for semantic similarity search, associated with entities.
 ```sql
 CREATE VIRTUAL TABLE vec_embeddings USING vec0(
   entity_id INTEGER PRIMARY KEY,
-  embedding float[384] distance_metric=cosine
+  embedding float[768] distance_metric=cosine
 );
 ```
 
 | Column | Type | Description |
 |--------|------|-------------|
 | `entity_id` | INTEGER | References entities(id) — the entity this embedding represents |
-| `embedding` | float[384] | 384-dimensional float vector (cosine distance metric) |
+| `embedding` | float[768] | 768-dimensional float vector (cosine distance metric) |
 
 **Design notes:**
 - `entity_id` maps to `entities.id` (not enforced by FK — vec0 is a virtual table).
 - Application-level validation in db.mjs ensures `entity_id` references a valid entity.
-- Dimension (384) is a module-level constant, configurable before first database creation.
+- Dimension (768) is a module-level constant, configurable before first database creation.
 - Vectors passed as `Float32Array` from JavaScript.
 - KNN query: `WHERE embedding MATCH ? ORDER BY distance LIMIT k`.
 - Application validates vector dimensions match before INSERT (sqlite-vec rejects mismatches, but we provide a clear error first).

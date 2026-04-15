@@ -8,7 +8,7 @@ All exported functions organized by module. Source paths relative to repo root.
 
 | Export | Value | Description |
 |--------|-------|-------------|
-| `EMBEDDING_DIMENSIONS` | `384` | Entity embedding vector dimensions |
+| `EMBEDDING_DIMENSIONS` | `768` | Entity embedding vector dimensions |
 | `CHUNK_EMBEDDING_DIMENSIONS` | `768` | Chunk embedding vector dimensions |
 
 ### Database Lifecycle
@@ -46,7 +46,7 @@ All exported functions organized by module. Source paths relative to repo root.
 |----------|-------------|
 | `traverseGraph(startEntityId, maxDepth)` | Recursive traversal, cycle-safe. Returns `[{id, name, type, depth, path}]` |
 
-### Entity Embeddings (384-dim)
+### Entity Embeddings (768-dim)
 
 | Function | Description |
 |----------|-------------|

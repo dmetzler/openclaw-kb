@@ -24,7 +24,7 @@
 **Purpose**: Create test file skeleton and shared test utilities for `wiki-search.mjs`
 
 - [x] T001 Create `tests/integration/wiki-search.test.mjs` with Vitest imports, `beforeEach`/`afterEach` hooks using `initDatabase(':memory:')` and `closeDatabase()`, and empty `describe` blocks for each user story (US1–US5) plus an edge-cases block
-- [x] T002 [P] Create shared test helper functions in `tests/integration/wiki-search.test.mjs` — `seedKGEntity(name, type, metadata)` that calls `createEntity()`, `seedDataRecord(recordType, data, recordedAt)` that calls `createDataSource()` + `insertRecord()`, `seedEmbedding(entityId, vector)` that calls `upsertEmbedding()`, and `randomVector(dims)` returning a random 384-dim array
+- [x] T002 [P] Create shared test helper functions in `tests/integration/wiki-search.test.mjs` — `seedKGEntity(name, type, metadata)` that calls `createEntity()`, `seedDataRecord(recordType, data, recordedAt)` that calls `createDataSource()` + `insertRecord()`, `seedEmbedding(entityId, vector)` that calls `upsertEmbedding()`, and `randomVector(dims)` returning a random 768-dim array
 
 **Checkpoint**: Test file loads and runs with zero tests. All seed helpers are reusable across describe blocks. Run `npx vitest run tests/integration/wiki-search.test.mjs` to verify.
 

@@ -44,10 +44,10 @@
   - Tier 2: `meals` table with FK to `data_sources`, indexes (`idx_meals_time`, `idx_meals_source`, `idx_meals_type`)
   - Tier 3: `search_index` FTS5 virtual table (standalone, `prefix='2 3'`, columns: `name`, `content_text`, `source_table`, `source_id UNINDEXED`)
   - Tier 3: FTS5 sync triggers for all 5 source tables (entities, health_metrics, activities, grades, meals) — INSERT/UPDATE/DELETE triggers per trigger mapping in data-model.md
-  - Tier 3: `vec_embeddings` vec0 virtual table (`entity_id INTEGER PRIMARY KEY`, `embedding float[384] distance_metric=cosine`)
+  - Tier 3: `vec_embeddings` vec0 virtual table (`entity_id INTEGER PRIMARY KEY`, `embedding float[768] distance_metric=cosine`)
   - Infrastructure: `schema_migrations` table (`version TEXT PRIMARY KEY`, `name TEXT NOT NULL`, `applied_at`)
 - [x] T008 Implement `src/db.mjs` core initialization and lifecycle functions per contracts/db-api.md:
-  - Export `EMBEDDING_DIMENSIONS = 384` constant
+  - Export `EMBEDDING_DIMENSIONS = 768` constant
   - `initDatabase(dbPath?)`: open database, set pragmas (WAL, FK, busy_timeout=5000, synchronous=NORMAL), load sqlite-vec extension via `sqliteVec.load(db)`, read and apply `schema.sql` if no tables exist, run pending migrations, register process exit handlers (exit, SIGHUP, SIGINT, SIGTERM)
   - `closeDatabase()`: close connection safely (idempotent)
   - Internal: migration runner — read `migrations/` directory, filter by `^\d{3}-.+\.sql$`, sort, skip applied, apply each in `db.transaction()` with INSERT into `schema_migrations`

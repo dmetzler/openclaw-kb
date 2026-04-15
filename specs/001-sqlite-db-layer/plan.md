@@ -5,7 +5,7 @@
 
 ## Summary
 
-Build a single-file SQLite database (`jarvis.db`) with three logical tiers — knowledge graph (entities + relations with recursive CTE traversal), data lake (health_metrics, activities, grades, meals, data_sources), and search infrastructure (FTS5 standalone full-text index + sqlite-vec vec0 embeddings table with 384-dimension cosine similarity). Expose all operations through a `db.mjs` ES module abstraction using `better-sqlite3` as the synchronous driver. Include `schema.sql` for initial schema, a `migrations/` directory with transactional numbered migration execution, and automatic FTS5 sync via database triggers on all source tables.
+Build a single-file SQLite database (`jarvis.db`) with three logical tiers — knowledge graph (entities + relations with recursive CTE traversal), data lake (health_metrics, activities, grades, meals, data_sources), and search infrastructure (FTS5 standalone full-text index + sqlite-vec vec0 embeddings table with 768-dimension cosine similarity). Expose all operations through a `db.mjs` ES module abstraction using `better-sqlite3` as the synchronous driver. Include `schema.sql` for initial schema, a `migrations/` directory with transactional numbered migration execution, and automatic FTS5 sync via database triggers on all source tables.
 
 ## Technical Context
 

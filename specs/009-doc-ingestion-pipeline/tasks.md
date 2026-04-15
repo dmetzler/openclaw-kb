@@ -255,4 +255,4 @@ Task: "Create tests/unit/converter.test.mjs"
 - Commit after each task or logical group
 - Stop at any checkpoint to validate story independently
 - The Python helper script (T002) is only needed for docling conversion — URL/Markdown/text ingestion works without it
-- Two embedding dimensions coexist: 384-dim (existing vec_embeddings) and 768-dim (new vec_chunks) — intentional per plan.md
+- Both embedding tables use 768-dim (vec_embeddings and vec_chunks) — matching nomic-embed-text native output per plan.md

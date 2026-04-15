@@ -215,7 +215,7 @@ Ensures consistent result structure across tiers by normalising field names and 
 | `vectorWeight` | 0.3 | `[0, 1]` | `search()` parameter |
 | `maxResults` | 20 | `[1, 200]` | `search()` parameter |
 | FTS5 prefix | `'2 3'` | N/A | `schema.sql` (compile-time) |
-| Embedding dimensions | 384 | N/A | `EMBEDDING_DIMENSIONS` in `db.mjs` |
+| Embedding dimensions | 768 | N/A | `EMBEDDING_DIMENSIONS` in `db.mjs` |
 | Vector distance metric | cosine | N/A | `schema.sql` (compile-time) |
 | Graph traversal depth | 2 | `[0, N]` | `traverseGraph()` parameter |
 

@@ -130,7 +130,7 @@ initDatabase();
 
 const entity = createEntity({ name: 'Neural Networks', type: 'concept' });
 
-// Store an embedding (must be EMBEDDING_DIMENSIONS length — 384 by default)
+// Store an embedding (must be EMBEDDING_DIMENSIONS length — 768 by default)
 const vector = new Array(EMBEDDING_DIMENSIONS).fill(0).map(() => Math.random());
 upsertEmbedding(entity.id, vector);
 

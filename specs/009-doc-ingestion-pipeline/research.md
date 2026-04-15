@@ -163,16 +163,16 @@ The existing pattern (migration files in `src/migrations/`, sequential numbering
 
 - **Migration naming**: `NNN-description.sql` (version from first 3 chars)
 - **Existing migration**: `001-generic-data-records.sql` — adds `data_sources`, `data_records` tables with FTS5 triggers
-- **Vec0 pattern**: `CREATE VIRTUAL TABLE vec_embeddings USING vec0(entity_id INTEGER PRIMARY KEY, embedding float[384] distance_metric=cosine)`
+- **Vec0 pattern**: `CREATE VIRTUAL TABLE vec_embeddings USING vec0(entity_id INTEGER PRIMARY KEY, embedding float[768] distance_metric=cosine)`
 - **FTS5 trigger pattern**: INSERT/UPDATE/DELETE triggers that sync content to `search_index` table
 - **Schema version tracking**: `schema_migrations` table with `version`, `name`, `applied_at`
-- **Current embedding dimension**: `EMBEDDING_DIMENSIONS = 384` in `db.mjs` — for entity-level embeddings
+- **Current embedding dimension**: `EMBEDDING_DIMENSIONS = 768` in `db.mjs` — for entity-level embeddings
 
 ### Design Decisions
 
 1. **New table `chunks`**: `id`, `entity_id` (FK CASCADE), `chunk_index`, `content`, `metadata` (JSON), `created_at`
 2. **New vec0 table `vec_chunks`**: `chunk_id` INTEGER PRIMARY KEY, `embedding float[768] distance_metric=cosine`
-3. **768 dimensions**: Separate from existing 384-dim `vec_embeddings`. New constant `CHUNK_EMBEDDING_DIMENSIONS = 768`.
+3. **768 dimensions**: Same as `vec_embeddings` (also 768-dim). Constant `CHUNK_EMBEDDING_DIMENSIONS = 768`.
 4. **FTS5 triggers**: Auto-sync chunk content to `search_index` with `source_table = 'chunks'`
 5. **CASCADE delete**: Deleting an entity cascades to its chunks; deleting a chunk cascades to its vec_chunks entry.
 
@@ -180,7 +180,7 @@ The existing pattern (migration files in `src/migrations/`, sequential numbering
 
 | Alternative | Why Rejected |
 |-------------|-------------|
-| Reuse `vec_embeddings` table (384-dim) | Dimension mismatch — nomic-embed-text produces 768-dim. Truncating to 384 loses quality. |
+| Reuse `vec_embeddings` table for chunks | Different granularity — entity-level vs chunk-level embeddings serve different search purposes. Separate tables allow independent KNN queries. |
 | Add chunks as a JSON column on entities | Loses queryability, can't index in FTS5, can't do KNN search per chunk |
 | Separate database file for chunks | Breaks single-file simplicity of `jarvis.db`, complicates transactions |
 

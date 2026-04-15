@@ -13,10 +13,10 @@ The database layer provides all SQLite operations for OpenClaw KB. It manages en
 ### `EMBEDDING_DIMENSIONS`
 
 ```js
-export const EMBEDDING_DIMENSIONS = 384;
+export const EMBEDDING_DIMENSIONS = 768;
 ```
 
-The dimensionality of embedding vectors stored in the `vec_embeddings` table. All embeddings must be exactly 384-dimensional Float32 arrays.
+The dimensionality of embedding vectors stored in the `vec_embeddings` table. All embeddings must be exactly 768-dimensional Float32 arrays.
 
 ---
 
@@ -232,7 +232,7 @@ const relations = getAllRelations();
 Inserts or updates a vector embedding for an entity.
 
 ```js
-const vec = new Float32Array(384);
+const vec = new Float32Array(768);
 // ... fill with embedding values
 upsertEmbedding(1, vec);
 ```
@@ -240,9 +240,9 @@ upsertEmbedding(1, vec);
 | Parameter | Type | Description |
 |---|---|---|
 | `entityId` | number | Entity ID |
-| `embedding` | Float32Array | 384-dimensional embedding vector |
+| `embedding` | Float32Array | 768-dimensional embedding vector |
 
-The embedding must be exactly `EMBEDDING_DIMENSIONS` (384) elements.
+The embedding must be exactly `EMBEDDING_DIMENSIONS` (768) elements.
 
 ### `deleteEmbedding(entityId)`
 
@@ -263,7 +263,7 @@ const nearest = findNearestVectors(queryVector, 10);
 
 | Parameter | Type | Default | Description |
 |---|---|---|---|
-| `embedding` | Float32Array | — | Query vector (384-dim) |
+| `embedding` | Float32Array | — | Query vector (768-dim) |
 | `limit` | number | 10 | Maximum results |
 
 **Returns:** `Array<{ entity_id: number, distance: number }>` sorted by ascending distance.
@@ -274,7 +274,7 @@ Returns all embeddings in the database.
 
 ```js
 const embeddings = getAllEmbeddings();
-// → [{ entity_id: 1, embedding: Float32Array(384) }, ...]
+// → [{ entity_id: 1, embedding: Float32Array(768) }, ...]
 ```
 
 **Returns:** `Array<{ entity_id: number, embedding: Float32Array }>`

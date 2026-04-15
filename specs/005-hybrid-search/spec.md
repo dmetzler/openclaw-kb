@@ -98,7 +98,7 @@ A developer building an LLM-powered question-answering system on top of the know
 - How does the system handle a search query that is an empty string or contains only whitespace?
 - What happens when the vec0 extension is not loaded but a semantic search is requested? (Graceful degradation to FTS5-only.)
 - How does the system behave when the search_index FTS5 table contains stale entries that reference deleted entities?
-- What happens when vector dimensions of a query do not match the stored embedding dimensions (384)?
+- What happens when vector dimensions of a query do not match the stored embedding dimensions (768)?
 - How does priority resolution work when a knowledge graph entity and a data record refer to different aspects of the same concept (e.g., entity "sleep" vs. data record tracking sleep hours)?
 - What happens when `maxResults` is set to 0 or a negative number?
 - How does the system handle FTS5 queries with special characters (quotes, asterisks, boolean operators)?

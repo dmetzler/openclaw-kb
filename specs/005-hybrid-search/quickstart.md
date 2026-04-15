@@ -100,7 +100,7 @@ const results = searchSemantic('artificial intelligence', {
   vectorWeight: 0.4,
   minScore: 0.3,
   maxResults: 15,
-  queryVector: embeddingModel.encode('artificial intelligence') // 384-dim Float32Array
+  queryVector: embeddingModel.encode('artificial intelligence') // 768-dim Float32Array
 });
 
 // { id: 7, name: 'AI Overview', tier: 3, score: 0.82,

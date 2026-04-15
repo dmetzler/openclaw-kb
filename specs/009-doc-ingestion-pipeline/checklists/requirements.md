@@ -33,5 +33,5 @@
 ## Notes
 
 - **Implementation details in spec (Content Quality #1, #3; Feature Readiness #4)**: The spec contains implementation details (specific file names, function signatures, database table schemas, technology names). This is **intentional and consistent with this project's established conventions** — all existing specs (001–008) include implementation-level detail. The user's original feature description was explicitly technical. Success Criteria have been updated to be technology-agnostic. These 3 checklist items are marked as **accepted deviations** per project convention.
-- **Embedding dimension resolved**: Changed from 384 to 768 dimensions to match nomic-embed-text's native output. The existing `vec_embeddings` table (384-dim) is unaffected — the new `vec_chunks` table uses 768-dim. Documented in Assumptions section.
+- **Embedding dimension resolved**: Both `vec_embeddings` and `vec_chunks` use 768 dimensions to match nomic-embed-text's native output. Documented in Assumptions section.
 - **Checklist result**: 13/16 items pass. 3 items are accepted deviations (implementation detail leakage — consistent with project conventions). Spec is ready for `/speckit.plan`.

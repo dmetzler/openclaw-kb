@@ -25,7 +25,7 @@ Wiki pages are auto-generated as Markdown files compatible with [Obsidian](https
 │  │  ─────────── │  │ ─────────── │  │ ────────────── │  │
 │  │  entities    │  │ data_records│  │ FTS5 (BM25)    │  │
 │  │  relations   │  │ data_sources│  │ vec0 (cosine)  │  │
-│  │  traversal   │  │ data_schemas│  │ 384d + 768d    │  │
+│  │  traversal   │  │ data_schemas│  │ 768d           │  │
 │  │  (depth 2)   │  │ JSON Schema │  │ embeddings     │  │
 │  └──────┬───────┘  └──────┬──────┘  └───────┬────────┘  │
 │         │                 │                  │           │
@@ -54,7 +54,7 @@ Wiki pages are auto-generated as Markdown files compatible with [Obsidian](https
 - **Knowledge Graph** with recursive traversal up to depth 2, entity/relation CRUD, and auto-indexed FTS5 search
 - **Generic data lake** with JSON Schema validation, typed records, and a schema registry with Obsidian wiki pages
 - **Semantic chunking** via [docling](https://github.com/DS4SD/docling) — supports PDF, DOCX, PPTX, and images
-- **Vector embeddings** via [Ollama](https://ollama.com) with `nomic-embed-text` (768-dim chunks + 384-dim entities)
+- **Vector embeddings** via [Ollama](https://ollama.com) with `nomic-embed-text` (768-dim for both entities and chunks)
 - **FTS5 full-text search** with BM25 ranking, prefix queries, and snippet extraction
 - **Hybrid 3-tier search** with priority rules — KG → Data Lake → Semantic, deduplicated and merged
 - **Obsidian-compatible wiki** with wikilinks, auto-generated index, YAML frontmatter, and operation log

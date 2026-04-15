@@ -8,7 +8,7 @@ This document defines the complete public interface of `src/db.mjs`. All functio
 
 ```javascript
 /** Default embedding vector dimensions. Must match vec0 table creation. */
-export const EMBEDDING_DIMENSIONS = 384;
+export const EMBEDDING_DIMENSIONS = 768;
 ```
 
 ---

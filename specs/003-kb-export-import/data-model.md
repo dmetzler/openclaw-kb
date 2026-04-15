@@ -221,7 +221,7 @@ One JSON object per line, ordered by `entity_id` ASC.
 | Field | Type | Serialization |
 |-------|------|---------------|
 | `entity_id` | `integer` | As-is |
-| `embedding` | `number[]` | JSON array of 384 float32 values |
+| `embedding` | `number[]` | JSON array of 768 float32 values |
 
 **Precision**: Values are the decimal representations of 32-bit floats as produced by `JSON.stringify(Array.from(float32Array))`. This produces the shortest decimal representation that round-trips through `parseFloat()` back to the same float32 bits.
 

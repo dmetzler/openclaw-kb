@@ -25,7 +25,7 @@ node -e "import('./src/db.mjs').then(m => { m.initDatabase(); m.closeDatabase();
 ```
 
 Optional dependencies:
-- **Ollama** with `nomic-embed-text` — vector embeddings (768-dim chunks, 384-dim entities)
+- **Ollama** with `nomic-embed-text` — vector embeddings (768-dim chunks, 768-dim entities)
 - **Python 3.10+** with `docling` — PDF/DOCX/PPTX ingestion
 
 ## Architecture
@@ -35,7 +35,7 @@ Optional dependencies:
 │  Tier 1: Knowledge Graph     │  Tier 2: Data Lake  │
 │  entities + relations        │  data_records        │
 │  traverseGraph (depth 2)     │  data_sources        │
-│  384-dim entity embeddings   │  data_schemas (AJV)  │
+│  768-dim entity embeddings   │  data_schemas (AJV)  │
 ├──────────────────────────────┴─────────────────────┤
 │  Tier 3: Semantic Search                           │
 │  FTS5 (BM25) + vec0 (768-dim chunk embeddings)     │
@@ -220,7 +220,7 @@ node src/schema-registry.mjs validate health_metric data.json
 
 | Constant | Value | Location |
 |----------|-------|----------|
-| Entity embedding dims | 384 | `db.mjs` `EMBEDDING_DIMENSIONS` |
+| Entity embedding dims | 768 | `db.mjs` `EMBEDDING_DIMENSIONS` |
 | Chunk embedding dims | 768 | `db.mjs` `CHUNK_EMBEDDING_DIMENSIONS` |
 | Ollama model | `nomic-embed-text` | `embedder.mjs` |
 | Default max search results | 20 | `wiki-search.mjs` |

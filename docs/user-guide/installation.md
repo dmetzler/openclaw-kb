@@ -53,7 +53,7 @@ This creates `jarvis.db` in the project root with:
 - **`data_sources`** — Registered data source metadata
 - **`data_records`** — Typed records (articles, metrics, events)
 - **`search_index`** — FTS5 full-text search virtual table
-- **`vec_embeddings`** — vec0 vector similarity virtual table (384 dimensions, cosine distance)
+- **`vec_embeddings`** — vec0 vector similarity virtual table (768 dimensions, cosine distance)
 - **`schema_migrations`** — Migration version tracking
 
 The database uses WAL mode for concurrent reads, enforces foreign keys, and sets a 5-second busy timeout.

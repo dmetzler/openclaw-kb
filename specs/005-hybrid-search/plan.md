@@ -15,7 +15,7 @@ The module is a stateless, read-only query layer built on top of the existing `d
 
 **Language/Version**: JavaScript (ES Modules), Node.js 18+
 **Primary Dependencies**: `better-sqlite3` (SQLite driver, via `db.mjs`), `sqlite-vec` (vec0 vector extension, via `db.mjs`), `vitest` 4.1.4 (test runner)
-**Storage**: SQLite (`jarvis.db`), WAL mode, foreign keys enforced. FTS5 virtual table (`search_index`) with prefix='2 3'. vec0 virtual table (`vec_embeddings`) with 384-dim cosine distance.
+**Storage**: SQLite (`jarvis.db`), WAL mode, foreign keys enforced. FTS5 virtual table (`search_index`) with prefix='2 3'. vec0 virtual table (`vec_embeddings`) with 768-dim cosine distance.
 **Testing**: Vitest 4.1.4, 30s timeout, in-memory SQLite per test (`initDatabase(':memory:')`)
 **Target Platform**: Node.js 18+ (server/CLI, no browser)
 **Project Type**: Library (ES Module with named exports)

@@ -86,7 +86,7 @@ sqliteVec.load(db);
 ```sql
 CREATE VIRTUAL TABLE vec_embeddings USING vec0(
   entity_id INTEGER PRIMARY KEY,
-  embedding float[384] distance_metric=cosine
+  embedding float[768] distance_metric=cosine
 );
 ```
 
@@ -106,7 +106,7 @@ LIMIT ?;
 ```
 
 ### Open Decision: Embedding Dimensions
-The spec says "configurable dimension" — we will default to 384 (MiniLM/all-MiniLM-L6-v2 output size) as the initial dimension, defined as a constant in `db.mjs`. This can be changed before first database creation. Dimension is fixed per table after creation.
+The spec says "configurable dimension" — we will default to 768 (nomic-embed-text output size) as the initial dimension, defined as a constant in `db.mjs`. This can be changed before first database creation. Dimension is fixed per table after creation.
 
 ---
 
@@ -299,5 +299,5 @@ db.pragma('synchronous = NORMAL'); // Safe with WAL, better write performance
 | Graph traversal | Recursive CTEs with cycle detection | Built-in |
 | Connection | Singleton, WAL, foreign keys ON | None |
 | Module system | ES modules (.mjs) | Node.js 18+ |
-| Embedding dimensions | 384 (configurable constant) | None |
+| Embedding dimensions | 768 (configurable constant) | None |
 | Distance metric | Cosine similarity | sqlite-vec |

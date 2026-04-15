@@ -23,7 +23,7 @@
 │vec_embeddings│       │ search_index │
 │──────────────│       │──────────────│
 │ entity_id(PK)│       │ name         │
-│embedding[384]│       │ content_text │
+│embedding[768]│       │ content_text │
 │(cosine dist) │       │ source_table │
 └──────────────┘       │ source_id    │
                        └──────────────┘
@@ -96,7 +96,7 @@ CREATE VIRTUAL TABLE vec_chunks USING vec0(
 
 ### Notes
 
-- **768 dimensions** — intentionally different from the existing `vec_embeddings` table (384 dimensions). The new table uses nomic-embed-text's native output dimension for maximum quality.
+- **768 dimensions** — same as the existing `vec_embeddings` table. Both use nomic-embed-text's native 768-dim output.
 - **Cosine distance** — same metric as existing `vec_embeddings`. Range: [0, 2] where 0 = identical.
 - **No FK constraint** — vec0 virtual tables do not support foreign key constraints. Application code must ensure referential integrity (delete vec_chunks entry when chunk is deleted).
 
@@ -253,11 +253,11 @@ No changes needed. Chunks reference entities via `entity_id` FK.
 ```sql
 CREATE VIRTUAL TABLE vec_embeddings USING vec0(
   entity_id INTEGER PRIMARY KEY,
-  embedding float[384] distance_metric=cosine
+  embedding float[768] distance_metric=cosine
 );
 ```
 
-Remains as-is for entity-level embeddings. The new `vec_chunks` table operates independently with 768 dimensions.
+Remains for entity-level embeddings. Both `vec_embeddings` and `vec_chunks` use 768 dimensions.
 
 ### Existing Table — `search_index` (unchanged structure, new content)
 

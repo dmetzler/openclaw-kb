@@ -53,7 +53,7 @@ Returned by all four public functions. Shape is identical regardless of source t
  * @property {number}                  [vectorWeight=0.3]  - Vector similarity weight (0–1)
  * @property {number}                  [minScore=0.0]      - Minimum combined score threshold
  * @property {number}                  [maxResults=20]     - Maximum results to return
- * @property {Float32Array|number[]}   [queryVector]       - Pre-computed query embedding (384-dim)
+ * @property {Float32Array|number[]}   [queryVector]       - Pre-computed query embedding (768-dim)
  */
 ```
 
@@ -198,14 +198,14 @@ export function searchSemantic(query, options = {})
 | `options.vectorWeight` | `number` | `0.3` | Weight for vector similarity. Clamped to [0, 1]. |
 | `options.minScore` | `number` | `0.0` | Minimum combined score threshold. Results below this are excluded. |
 | `options.maxResults` | `number` | `20` | Maximum results to return. |
-| `options.queryVector` | `Float32Array\|number[]` | `undefined` | Pre-computed 384-dim query embedding. If absent, vector search is skipped. |
+| `options.queryVector` | `Float32Array\|number[]` | `undefined` | Pre-computed 768-dim query embedding. If absent, vector search is skipped. |
 
 **Returns**: `SearchResult[]` — Results with `tier: 3`. Ordered by combined score (descending). Array length ≤ `maxResults`.
 
 **Behavior**:
 1. Validate and trim `query`. If empty after trim, return `[]`.
 2. Call `db.search(query)` to get FTS5 results. Normalize ranks via `bm25ToScore(rank)`.
-3. If `queryVector` is provided (and is a valid 384-element array), call `db.findNearestVectors(queryVector, maxResults)` to get vector results. Convert distances via `vecDistanceToSimilarity(distance)`.
+3. If `queryVector` is provided (and is a valid 768-element array), call `db.findNearestVectors(queryVector, maxResults)` to get vector results. Convert distances via `vecDistanceToSimilarity(distance)`.
 4. If `queryVector` is absent, skip vector search. Set `effectiveFtsWeight = 1.0`, `effectiveVecWeight = 0`.
 5. Build a combined result map keyed by `${source_table}:${source_id}`:
    - FTS-only match: `combinedScore = effectiveFtsWeight * ftsScore`
@@ -224,7 +224,7 @@ const results = searchSemantic('artificial intelligence', {
   ftsWeight: 0.6,
   vectorWeight: 0.4,
   minScore: 0.3,
-  queryVector: new Float32Array(384).fill(0.1) // placeholder embedding
+  queryVector: new Float32Array(768).fill(0.1) // placeholder embedding
 });
 
 // FTS5 only (no vector)

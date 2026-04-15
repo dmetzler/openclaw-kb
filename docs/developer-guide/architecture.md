@@ -69,7 +69,7 @@ Full-text search and vector similarity serve different use cases:
 | Feature | FTS5 | vec0 |
 |---------|------|------|
 | Query type | Keyword/phrase matching | Semantic similarity |
-| Input | Text string | 384-dim float vector |
+| Input | Text string | 768-dim float vector |
 | Ranking | BM25 (term frequency) | Cosine distance |
 | Best for | Exact lookups, known terms | Fuzzy discovery, related concepts |
 
@@ -104,7 +104,7 @@ erDiagram
 
     vec_embeddings {
         int entity_id PK
-        float_arr embedding "float[384], cosine"
+        float_arr embedding "float[768], cosine"
     }
 
     data_sources {
@@ -146,7 +146,7 @@ erDiagram
 - **Relations**: `UNIQUE(source_id, target_id, type)` prevents duplicate edges; `CHECK(source_id != target_id)` prevents self-loops; foreign keys CASCADE on delete
 - **Data sources**: `name` is UNIQUE across all sources
 - **Search index**: FTS5 virtual table with `prefix='2 3'` for fast prefix queries; auto-populated via triggers on `entities` and `data_records`
-- **Vec embeddings**: vec0 virtual table with 384-dimensional float vectors and cosine distance metric
+- **Vec embeddings**: vec0 virtual table with 768-dimensional float vectors and cosine distance metric
 
 ### Auto-Population Triggers
 

@@ -80,7 +80,7 @@ const results = searchData('blood pressure', 'health_metric');
 The Semantic tier combines two signals:
 
 1. **FTS5 full-text search** — keyword matching with BM25 scoring
-2. **vec0 vector similarity** — cosine distance on 384-dimensional embeddings
+2. **vec0 vector similarity** — cosine distance on 768-dimensional embeddings
 
 When both signals are available, they are fused with configurable weights (defaults: FTS 0.7, vector 0.3). When no query vector is provided, the system uses FTS scores only — no error, no degradation.
 
@@ -100,7 +100,7 @@ similarity = max(0, 1 - distance)
 | `ftsWeight` | `number` | `0.7` | Weight for FTS5 scores (0–1) |
 | `vectorWeight` | `number` | `0.3` | Weight for vector similarity (0–1) |
 | `minScore` | `number` | `0.0` | Minimum combined score threshold |
-| `queryVector` | `Float32Array` | — | 384-dim embedding for vector search |
+| `queryVector` | `Float32Array` | — | 768-dim embedding for vector search |
 
 ### Example
 
@@ -112,7 +112,7 @@ const results = searchSemantic('artificial intelligence', {
   ftsWeight: 0.6,
   vectorWeight: 0.4,
   minScore: 0.3,
-  queryVector: new Float32Array(384).fill(0.1),
+  queryVector: new Float32Array(768).fill(0.1),
 });
 
 // FTS5 only (no vector)
