@@ -154,9 +154,9 @@
 
 **Purpose**: Final quality pass across all user stories
 
-- [ ] T024 Run full test suite (`npm test`) and fix any failures
-- [ ] T025 Run `lsp_diagnostics` on all changed files (`src/db.mjs`, `src/schema-registry.mjs`, `tests/unit/schema-registry.test.mjs`) and fix any errors
-- [ ] T026 [P] Verify all 6 wiki pages generated correctly in `wiki/schemas/` — check formatting renders in Markdown
+- [x] T024 Run full test suite (`npm test`) and fix any failures
+- [x] T025 Run `lsp_diagnostics` on all changed files (`src/db.mjs`, `src/schema-registry.mjs`, `tests/unit/schema-registry.test.mjs`) and fix any errors
+- [x] T026 [P] Verify all 6 wiki pages generated correctly in `wiki/schemas/` — check formatting renders in Markdown
 - [x] T027 Add JSDoc documentation to all new exported functions in `src/db.mjs` and `src/schema-registry.mjs`
 
 ---
