@@ -15,13 +15,35 @@ import {
 /** Wiki subdirectory types. */
 const WIKI_TYPES = ['entities', 'concepts', 'topics', 'comparisons', 'sources'];
 
-/** Map entity type → subdirectory name. */
+/** Map entity type → subdirectory name. Entity-like KG types all go to entities/. */
 const TYPE_TO_DIR = {
   entity: 'entities',
   concept: 'concepts',
   topic: 'topics',
   comparison: 'comparisons',
   source: 'sources',
+  // KG entity types → entities/ directory
+  human: 'entities',
+  person: 'entities',
+  org: 'entities',
+  organization: 'entities',
+  place: 'entities',
+  device: 'entities',
+  service: 'entities',
+  product: 'entities',
+  media: 'entities',
+  event: 'entities',
+  project: 'entities',
+  infrastructure: 'entities',
+  knowledge: 'entities',
+  skill: 'entities',
+  ai: 'entities',
+  network: 'entities',
+  credential: 'entities',
+  account: 'entities',
+  routine: 'entities',
+  decision: 'entities',
+  tool: 'entities',
 };
 
 /** gray-matter options with JSON_SCHEMA engine for date safety. */
@@ -37,8 +59,9 @@ const MATTER_OPTIONS = {
 /**
  * Converts an entity/concept name to a file-system-safe slug.
  *
- * Lowercase, spaces to hyphens, strip non-alphanumeric (except hyphens),
- * collapse consecutive hyphens, trim leading/trailing hyphens.
+ * Lowercase, spaces to hyphens, keep Unicode letters and digits (including
+ * accented characters like é, è, ç, ô, etc.), strip punctuation and special
+ * characters, collapse consecutive hyphens, trim leading/trailing hyphens.
  * If >80 chars, truncate to 73 + '-' + 6-char MD5 hash.
  *
  * @param {string} name - Entity or concept name.
@@ -48,7 +71,7 @@ export function slugify(name) {
   let slug = name
     .toLowerCase()
     .replace(/\s+/g, '-')
-    .replace(/[^a-z0-9-]/g, '')
+    .replace(/[^\p{L}\p{N}-]/gu, '')
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '');
 
@@ -103,7 +126,7 @@ export function createPage(entity, rawFile, options = {}) {
     throw new Error('Entity name must be a non-empty string');
   }
 
-  const validTypes = ['entity', 'concept', 'topic', 'comparison', 'source'];
+  const validTypes = Object.keys(TYPE_TO_DIR);
   if (!validTypes.includes(entity.type)) {
     throw new Error(`Invalid entity type: ${entity.type}`);
   }
@@ -137,6 +160,7 @@ export function createPage(entity, rawFile, options = {}) {
   const frontmatter = {
     id: fileName.replace(/\.md$/, ''),
     type: entity.type,
+    tags: [entity.type],
     created: now,
     updated: now,
     sources: [rawFile],
@@ -290,7 +314,7 @@ export function findPage(entityName, options = {}) {
   }
 
   // Also check disambiguated names (with type suffix)
-  for (const type of ['entity', 'concept', 'topic', 'comparison', 'source']) {
+  for (const type of Object.keys(TYPE_TO_DIR)) {
     const disambiguated = `${slug}-${type}.md`;
     const result = _findFileAcrossWiki(disambiguated, wikiDir);
     if (result) {
