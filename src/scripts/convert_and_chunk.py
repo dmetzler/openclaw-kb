@@ -43,8 +43,14 @@ def main():
 
         chunk_list = []
         for chunk in chunks:
-            headings = list(chunk.meta.headings) if hasattr(chunk.meta, 'headings') else []
-            contextualized = chunker.contextualize(chunk) if hasattr(chunker, 'contextualize') else chunk.text
+            meta = getattr(chunk, 'meta', None)
+            headings = list(getattr(meta, 'headings', None) or [])
+
+            try:
+                contextualized = chunker.contextualize(chunk)
+            except Exception:
+                contextualized = chunk.text
+
             chunk_list.append({
                 "text": chunk.text,
                 "headings": headings,

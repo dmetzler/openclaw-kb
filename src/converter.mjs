@@ -49,7 +49,7 @@ export function detectFormat(filePath) {
  * Checks whether docling is available in the configured Python environment.
  *
  * @param {Object} [options]
- * @param {string} [options.pythonPath='python3'] - Python executable path.
+ * @param {string} [options.pythonPath] - Python executable path. Defaults to PYTHON_PATH env var or 'python3'.
  * @returns {Promise<boolean>} True when docling can be imported.
  */
 export async function isDoclingAvailable(options = {}) {
@@ -57,7 +57,7 @@ export async function isDoclingAvailable(options = {}) {
     return doclingAvailable === true;
   }
 
-  const pythonPath = options.pythonPath ?? 'python3';
+  const pythonPath = options.pythonPath ?? process.env.PYTHON_PATH ?? 'python3';
 
   try {
     const pythonResult = await _spawnWithOutput(pythonPath, ['--version']);
@@ -75,7 +75,7 @@ export async function isDoclingAvailable(options = {}) {
   try {
     const doclingResult = await _spawnWithOutput(
       pythonPath,
-      ['-c', 'import docling; print(docling.__version__)'],
+      ['-c', 'from docling.document_converter import DocumentConverter; print("ok")'],
     );
     doclingAvailable = doclingResult.code === 0;
   } catch {
@@ -91,8 +91,8 @@ export async function isDoclingAvailable(options = {}) {
  *
  * @param {string} filePath - Absolute path to the document file.
  * @param {Object} [options]
- * @param {number} [options.timeoutMs=120000] - Subprocess timeout in milliseconds.
- * @param {string} [options.pythonPath='python3'] - Python executable path.
+ * @param {number} [options.timeoutMs=600000] - Subprocess timeout in milliseconds.
+ * @param {string} [options.pythonPath] - Python executable path. Defaults to PYTHON_PATH env var or 'python3'.
  * @returns {Promise<{ markdown: string, chunks: Array<{ text: string, headings: string[], contextualized: string }> | null, source: { path: string, format: string, converter: string } }>}
  * @throws {Error} If the file is missing, conversion fails, or dependencies are unavailable.
  */
@@ -117,8 +117,8 @@ export async function convertDocument(filePath, options = {}) {
   }
 
   if (DOCLING_FORMATS.has(format)) {
-    const pythonPath = options.pythonPath ?? 'python3';
-    const timeoutMs = options.timeoutMs ?? 120000;
+    const pythonPath = options.pythonPath ?? process.env.PYTHON_PATH ?? 'python3';
+    const timeoutMs = options.timeoutMs ?? 600000;
     const available = await isDoclingAvailable({ pythonPath });
 
     if (!available) {
@@ -139,11 +139,16 @@ export async function convertDocument(filePath, options = {}) {
     );
 
     if (code !== 0) {
-      const errorText = stderr.trim() || 'Unknown conversion error';
+      const errorText = stderr.trim() || stdout.trim() || 'Unknown conversion error';
       throw new Error(`Failed to convert ${filePath}: ${errorText}`);
     }
 
-    const parsed = JSON.parse(stdout);
+    let parsed;
+    try {
+      parsed = JSON.parse(stdout);
+    } catch (parseError) {
+      throw new Error(`Failed to parse converter output for ${filePath}: ${parseError.message}`);
+    }
     return {
       markdown: parsed.markdown,
       chunks: parsed.chunks,
