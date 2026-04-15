@@ -63,7 +63,7 @@
 
 ### Tests for User Story 1
 
-- [ ] T013 [P] [US1] Create integration test `tests/integration/ingest-file.test.mjs` — test full pipeline: ingestFile with sample.md fixture (no docling needed) → verify entities created, chunks stored, embeddings stored (mock Ollama), wiki pages created, FTS5 index entries exist for chunks. Test re-ingestion replaces chunks atomically. Test with skipEmbedding option. Test error cases: file not found, unsupported format.
+- [X] T013 [P] [US1] Create integration test `tests/integration/ingest-file.test.mjs` — test full pipeline: ingestFile with sample.md fixture (no docling needed) → verify entities created, chunks stored, embeddings stored (mock Ollama), wiki pages created, FTS5 index entries exist for chunks. Test re-ingestion replaces chunks atomically. Test with skipEmbedding option. Test error cases: file not found, unsupported format.
 
 **Checkpoint**: User Story 1 is fully functional — local documents can be ingested end-to-end.
 
@@ -81,7 +81,7 @@
 
 ### Tests for User Story 2
 
-- [ ] T015 [P] [US2] Create integration test `tests/integration/chunk-search.test.mjs` — seed database with chunks and embeddings for multiple entities on different topics; test searchSemantic returns chunks ranked by similarity; results include parent entity context; results interleaved by relevance not grouped by entity; test fallback to FTS5 when Ollama unavailable (mock ECONNREFUSED); test backward compat with explicit queryVector option.
+- [X] T015 [P] [US2] Create integration test `tests/integration/chunk-search.test.mjs` — seed database with chunks and embeddings for multiple entities on different topics; test searchSemantic returns chunks ranked by similarity; results include parent entity context; results interleaved by relevance not grouped by entity; test fallback to FTS5 when Ollama unavailable (mock ECONNREFUSED); test backward compat with explicit queryVector option.
 
 **Checkpoint**: Chunk-level semantic search works independently.
 
@@ -95,7 +95,7 @@
 
 ### Implementation for User Story 3
 
-- [ ] T016 [US3] Extend `src/ingest.mjs` — after entity creation in `ingestUrl()`, add chunking stage: call `chunker.chunkMarkdown(content, {source: url})` (heading-boundary since readability, not docling); `deleteChunksForEntity()` for re-ingestion; `insertChunk()` per chunk; `embedder.embedBatch()` → `upsertChunkEmbedding()` per chunk (graceful if Ollama unavailable). Return enhanced result with `chunks: {total, embedded}`. Ensure all existing behavior (raw file, wiki pages, KG entities, index, log) is unchanged.
+- [X] T016 [US3] Extend `src/ingest.mjs` — after entity creation in `ingestUrl()`, add chunking stage: call `chunker.chunkMarkdown(content, {source: url})` (heading-boundary since readability, not docling); `deleteChunksForEntity()` for re-ingestion; `insertChunk()` per chunk; `embedder.embedBatch()` → `upsertChunkEmbedding()` per chunk (graceful if Ollama unavailable). Return enhanced result with `chunks: {total, embedded}`. Ensure all existing behavior (raw file, wiki pages, KG entities, index, log) is unchanged.
 
 ### Tests for User Story 3
 
@@ -131,11 +131,11 @@
 
 ### Implementation for User Story 5
 
-- [ ] T020 [US5] Verify FTS5 trigger integration — the triggers created in T001 (migration 002) handle INSERT/UPDATE/DELETE sync to search_index. Verify by running the migration and confirming: inserting a chunk auto-creates search_index entry with `source_table='chunks'`; updating a chunk updates the FTS entry; deleting a chunk removes the FTS entry. If any trigger behavior is incorrect, fix the migration SQL.
+- [X] T020 [US5] Verify FTS5 trigger integration — the triggers created in T001 (migration 002) handle INSERT/UPDATE/DELETE sync to search_index. Verify by running the migration and confirming: inserting a chunk auto-creates search_index entry with `source_table='chunks'`; updating a chunk updates the FTS entry; deleting a chunk removes the FTS entry. If any trigger behavior is incorrect, fix the migration SQL.
 
 ### Tests for User Story 5
 
-- [ ] T021 [P] [US5] Add FTS5 chunk test cases to `tests/unit/chunks-db.test.mjs` — verify: insertChunk creates search_index entry (query FTS5 table); chunk content is searchable via FTS5 MATCH; deleteChunksForEntity cascades to search_index removal; search for unique phrase in chunk content returns the chunk's source_id.
+- [X] T021 [P] [US5] Add FTS5 chunk test cases to `tests/unit/chunks-db.test.mjs` — verify: insertChunk creates search_index entry (query FTS5 table); chunk content is searchable via FTS5 MATCH; deleteChunksForEntity cascades to search_index removal; search for unique phrase in chunk content returns the chunk's source_id.
 
 **Checkpoint**: FTS5 search now covers chunk content in addition to entity metadata.
 
@@ -149,11 +149,11 @@
 
 ### Implementation for User Story 6
 
-- [ ] T022 [US6] Verify pass-through behavior in `src/converter.mjs` — the converter (created in T007) already handles .md/.txt as pass-through (reads file content directly, returns `chunks: null`, chunker.chunkMarkdown handles splitting). Verify by testing: `.md` file → no subprocess spawn, content returned directly; `.txt` file → same. If any behavior is missing, add it.
+- [X] T022 [US6] Verify pass-through behavior in `src/converter.mjs` — the converter (created in T007) already handles .md/.txt as pass-through (reads file content directly, returns `chunks: null`, chunker.chunkMarkdown handles splitting). Verify by testing: `.md` file → no subprocess spawn, content returned directly; `.txt` file → same. If any behavior is missing, add it.
 
 ### Tests for User Story 6
 
-- [ ] T023 [P] [US6] Add pass-through test cases to `tests/unit/converter.test.mjs` and `tests/integration/ingest-file.test.mjs` — verify .md file is not sent to docling; .txt file is not sent to docling; both produce valid chunks and embeddings after full pipeline; paragraph-boundary chunking works for .txt content.
+- [X] T023 [P] [US6] Add pass-through test cases to `tests/unit/converter.test.mjs` and `tests/integration/ingest-file.test.mjs` — verify .md file is not sent to docling; .txt file is not sent to docling; both produce valid chunks and embeddings after full pipeline; paragraph-boundary chunking works for .txt content.
 
 **Checkpoint**: All file types (PDF, DOCX, PPTX, images, Markdown, text) handled by the pipeline.
 

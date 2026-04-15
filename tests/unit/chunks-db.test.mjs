@@ -9,6 +9,7 @@ import {
   upsertChunkEmbedding,
   findNearestChunks,
   getChunkWithEntity,
+  search,
   CHUNK_EMBEDDING_DIMENSIONS,
 } from '../../src/db.mjs';
 
@@ -80,6 +81,84 @@ describe('Chunk CRUD', () => {
 
   it('deleteChunksForEntity returns 0 for nonexistent entity', () => {
     expect(deleteChunksForEntity(999999)).toBe(0);
+  });
+});
+
+describe('FTS5 chunk triggers (T021)', () => {
+  it('insertChunk creates search_index entry', () => {
+    const entity = createEntity({ name: 'Searchable Doc', type: 'document' });
+    const content = 'Chunk content for search index';
+    const metadata = { section: ['intro'] };
+
+    const chunkId = insertChunk(entity.id, 0, content, metadata);
+    const db = initDatabase();
+    const row = db
+      .prepare(
+        'SELECT name, content_text, source_table, source_id FROM search_index WHERE source_table = ? AND source_id = ?',
+      )
+      .get('chunks', chunkId);
+
+    expect(row).toBeTruthy();
+    expect(row).toMatchObject({
+      name: 'intro',
+      content_text: content,
+      source_table: 'chunks',
+      source_id: Number(chunkId),
+    });
+  });
+
+  it('chunk content is searchable via FTS5 MATCH', () => {
+    const entity = createEntity({ name: 'FTS Doc', type: 'document' });
+    const content = 'supercalifragilistic quantum mechanics';
+    const chunkId = insertChunk(entity.id, 0, content, { section: ['search'] });
+
+    const results = search('supercalifragilistic', { source_table: 'chunks' });
+
+    expect(results).toHaveLength(1);
+    expect(results[0]).toMatchObject({
+      source_table: 'chunks',
+      source_id: Number(chunkId),
+    });
+  });
+
+  it('deleteChunksForEntity removes search_index entries', () => {
+    const entity = createEntity({ name: 'Delete Doc', type: 'document' });
+    const chunkIdA = insertChunk(entity.id, 0, 'first delete target', { section: ['delete'] });
+    const chunkIdB = insertChunk(entity.id, 1, 'second delete target', { section: ['delete'] });
+    const db = initDatabase();
+
+    const beforeCount = db
+      .prepare(
+        'SELECT COUNT(*) AS count FROM search_index WHERE source_table = ? AND source_id IN (?, ?)',
+      )
+      .get('chunks', chunkIdA, chunkIdB).count;
+
+    expect(beforeCount).toBe(2);
+
+    const deleted = deleteChunksForEntity(entity.id);
+    expect(deleted).toBe(2);
+
+    const afterCount = db
+      .prepare(
+        'SELECT COUNT(*) AS count FROM search_index WHERE source_table = ? AND source_id IN (?, ?)',
+      )
+      .get('chunks', chunkIdA, chunkIdB).count;
+
+    expect(afterCount).toBe(0);
+  });
+
+  it("unique phrase in chunk returns chunk's source_id", () => {
+    const entity = createEntity({ name: 'Unique Doc', type: 'document' });
+    const content = 'zebraquark singularity beacon';
+    const chunkId = insertChunk(entity.id, 0, content, { section: ['unique'] });
+
+    const results = search('zebraquark', { source_table: 'chunks' });
+
+    expect(results).toHaveLength(1);
+    expect(results[0]).toMatchObject({
+      source_table: 'chunks',
+      source_id: Number(chunkId),
+    });
   });
 });
 

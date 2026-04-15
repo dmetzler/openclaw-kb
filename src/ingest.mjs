@@ -1,11 +1,12 @@
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import matter from 'gray-matter';
 import yaml from 'js-yaml';
 import { fetchUrl } from './fetcher.mjs';
 import { extract } from './extractor.mjs';
+import { chunkMarkdown } from './chunker.mjs';
+import { embedBatch } from './embedder.mjs';
 import {
-  slugify,
   rawFileName as generateRawFileName,
   createPage,
   updatePage,
@@ -13,7 +14,12 @@ import {
   regenerateIndex,
   appendLog,
 } from './wiki.mjs';
-import { createRelation, createEntity, getEntity } from './db.mjs';
+import {
+  createRelation,
+  insertChunk,
+  deleteChunksForEntity,
+  upsertChunkEmbedding,
+} from './db.mjs';
 
 /** gray-matter options with JSON_SCHEMA engine for date safety. */
 const MATTER_OPTIONS = {
@@ -74,7 +80,7 @@ function archiveRawSource({ title, content, source, author, tags = [] }, options
  * @param {string} [options.wikiDir='wiki'] - Root directory for wiki pages.
  * @param {string} [options.rawDir='raw'] - Root directory for raw source files.
  * @param {number} [options.fetchTimeout=15000] - URL fetch timeout in milliseconds.
- * @returns {Promise<{ ok: boolean, rawFile: string, pagesCreated: string[], pagesUpdated: string[], pagesFailed: { name: string, error: string }[], entitiesCreated: number, relationsCreated: number }>}
+ * @returns {Promise<{ ok: boolean, rawFile: string, pagesCreated: string[], pagesUpdated: string[], pagesFailed: { name: string, error: string }[], entitiesCreated: number, relationsCreated: number, chunks: { total: number, embedded: number } }>}
  * @throws {Error} If URL is invalid or fetch fails.
  */
 export async function ingestUrl(url, llm, options = {}) {
@@ -183,6 +189,39 @@ export async function ingestUrl(url, llm, options = {}) {
     }
   }
 
+  let totalChunks = 0;
+  let embeddedChunks = 0;
+  const chunksToEmbed = [];
+  const entityKgIds = [...entityKgMap.values()];
+  const chunks = chunkMarkdown(fetchResult.content, { source: url });
+
+  for (const kgId of entityKgIds) {
+    deleteChunksForEntity(kgId);
+
+    chunks.forEach((chunk, index) => {
+      const chunkId = insertChunk(kgId, index, chunk.text, chunk.metadata);
+      totalChunks += 1;
+      chunksToEmbed.push({ chunkId, text: chunk.text });
+    });
+  }
+
+  if (chunksToEmbed.length > 0) {
+    let embeddings = [];
+    try {
+      embeddings = await embedBatch(chunksToEmbed.map((chunk) => chunk.text));
+    } catch {
+      embeddings = chunksToEmbed.map(() => null);
+    }
+
+    embeddings.forEach((embedding, index) => {
+      if (!embedding) {
+        return;
+      }
+      upsertChunkEmbedding(chunksToEmbed[index].chunkId, embedding);
+      embeddedChunks += 1;
+    });
+  }
+
   // Regenerate index
   regenerateIndex({ wikiDir });
 
@@ -206,6 +245,7 @@ export async function ingestUrl(url, llm, options = {}) {
     pagesFailed,
     entitiesCreated,
     relationsCreated,
+    chunks: { total: totalChunks, embedded: embeddedChunks },
   };
 }
 
@@ -219,7 +259,7 @@ export async function ingestUrl(url, llm, options = {}) {
  * @param {Object} [options]
  * @param {string} [options.wikiDir='wiki'] - Root directory for wiki pages.
  * @param {string} [options.rawDir='raw'] - Root directory for raw source files.
- * @returns {Promise<{ ok: boolean, rawFile: string, pagesCreated: string[], pagesUpdated: string[], pagesFailed: { name: string, error: string }[], entitiesCreated: number, relationsCreated: number }>}
+ * @returns {Promise<{ ok: boolean, rawFile: string, pagesCreated: string[], pagesUpdated: string[], pagesFailed: { name: string, error: string }[], entitiesCreated: number, relationsCreated: number, chunks: { total: number, embedded: number } }>}
  * @throws {Error} If title or text is empty.
  */
 export async function ingestText(title, text, llm, options = {}) {
@@ -317,6 +357,39 @@ export async function ingestText(title, text, llm, options = {}) {
     }
   }
 
+  let totalChunks = 0;
+  let embeddedChunks = 0;
+  const chunksToEmbed = [];
+  const entityKgIds = [...entityKgMap.values()];
+  const chunks = chunkMarkdown(text, { source: 'manual' });
+
+  for (const kgId of entityKgIds) {
+    deleteChunksForEntity(kgId);
+
+    chunks.forEach((chunk, index) => {
+      const chunkId = insertChunk(kgId, index, chunk.text, chunk.metadata);
+      totalChunks += 1;
+      chunksToEmbed.push({ chunkId, text: chunk.text });
+    });
+  }
+
+  if (chunksToEmbed.length > 0) {
+    let embeddings = [];
+    try {
+      embeddings = await embedBatch(chunksToEmbed.map((chunk) => chunk.text));
+    } catch {
+      embeddings = chunksToEmbed.map(() => null);
+    }
+
+    embeddings.forEach((embedding, index) => {
+      if (!embedding) {
+        return;
+      }
+      upsertChunkEmbedding(chunksToEmbed[index].chunkId, embedding);
+      embeddedChunks += 1;
+    });
+  }
+
   // Regenerate index
   regenerateIndex({ wikiDir });
 
@@ -340,6 +413,7 @@ export async function ingestText(title, text, llm, options = {}) {
     pagesFailed,
     entitiesCreated,
     relationsCreated,
+    chunks: { total: totalChunks, embedded: embeddedChunks },
   };
 }
 

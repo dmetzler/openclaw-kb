@@ -13,15 +13,20 @@ const sampleMdPath = join(fixturesDir, 'sample.md');
 
 let tempTxtPath = null;
 let tempUnsupportedPath = null;
+let tempMdPath = null;
 
 afterEach(() => {
   if (tempTxtPath && existsSync(tempTxtPath)) {
     unlinkSync(tempTxtPath);
   }
+  if (tempMdPath && existsSync(tempMdPath)) {
+    unlinkSync(tempMdPath);
+  }
   if (tempUnsupportedPath && existsSync(tempUnsupportedPath)) {
     unlinkSync(tempUnsupportedPath);
   }
   tempTxtPath = null;
+  tempMdPath = null;
   tempUnsupportedPath = null;
 });
 
@@ -73,6 +78,18 @@ describe('convertDocument', () => {
     });
   });
 
+  it('pass-through: .md file is not sent to docling', async () => {
+    tempMdPath = join(tmpdir(), `converter-markdown-${Date.now()}.md`);
+    const content = '# Passthrough title\n\nPlain markdown.';
+    writeFileSync(tempMdPath, content, 'utf8');
+
+    const result = await convertDocument(tempMdPath);
+
+    expect(result.source.converter).toBe('passthrough');
+    expect(result.source.format).toBe('markdown');
+    expect(result.chunks).toBeNull();
+  });
+
   it('passes through text content for .txt files', async () => {
     tempTxtPath = join(tmpdir(), `converter-text-${Date.now()}.txt`);
     const content = 'Sample plain text content.';
@@ -89,6 +106,32 @@ describe('convertDocument', () => {
         converter: 'passthrough',
       },
     });
+  });
+
+  it('pass-through: .md content is returned unchanged', async () => {
+    tempMdPath = join(tmpdir(), `converter-markdown-${Date.now()}.md`);
+    const content = '## Heading\n\nMarkdown body with **bold**.';
+    writeFileSync(tempMdPath, content, 'utf8');
+
+    const result = await convertDocument(tempMdPath);
+
+    expect(result.markdown).toBe(content);
+  });
+
+  it('pass-through: .txt content is returned unchanged', async () => {
+    tempTxtPath = join(tmpdir(), `converter-text-${Date.now()}.txt`);
+    const content = 'Another text payload for passthrough.';
+    writeFileSync(tempTxtPath, content, 'utf8');
+
+    const result = await convertDocument(tempTxtPath);
+
+    expect(result.markdown).toBe(content);
+  });
+
+  it('pass-through: returns null chunks for further processing by chunkMarkdown', async () => {
+    const result = await convertDocument(sampleMdPath);
+
+    expect(result.chunks).toBeNull();
   });
 
   it('throws when file does not exist', async () => {
