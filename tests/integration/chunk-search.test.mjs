@@ -145,7 +145,7 @@ describe('chunk-level semantic search', () => {
     });
   });
 
-  it('backward compat: explicit queryVector uses 384-dim entity vectors', async () => {
+  it('backward compat: explicit queryVector uses 768-dim entity vectors', async () => {
     const entity = createEntity({ name: 'Entity Vector', type: 'note' });
     const chunkId = insertChunk(entity.id, 0, 'Chunk text for entity', { section: ['Entity'] });
     upsertChunkEmbedding(chunkId, unitChunkVector(6));

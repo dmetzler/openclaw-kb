@@ -129,7 +129,7 @@ END;
 
 CREATE VIRTUAL TABLE vec_embeddings USING vec0(
   entity_id INTEGER PRIMARY KEY,
-  embedding float[384] distance_metric=cosine
+  embedding float[768] distance_metric=cosine
 );
 
 CREATE TABLE schema_migrations (

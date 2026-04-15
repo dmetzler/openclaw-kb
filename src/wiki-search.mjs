@@ -20,6 +20,7 @@ import {
   getEntity,
   getChunkWithEntity,
   queryRecords,
+  EMBEDDING_DIMENSIONS,
 } from './db.mjs';
 import { embed } from './embedder.mjs';
 
@@ -347,7 +348,7 @@ export function searchData(query, recordType) {
  *   ftsWeight: 0.6,
  *   vectorWeight: 0.4,
  *   minScore: 0.3,
- *   queryVector: new Float32Array(384).fill(0.1)
+  *   queryVector: new Float32Array(768).fill(0.1)
  * });
  *
  * @example
@@ -403,7 +404,7 @@ export async function searchSemantic(query, options = {}) {
     let hasVec = false;
     if (queryVector && (Array.isArray(queryVector) || queryVector instanceof Float32Array)) {
       const arr = queryVector instanceof Float32Array ? queryVector : Array.from(queryVector);
-      if (arr.length === 384) {
+      if (arr.length === EMBEDDING_DIMENSIONS) {
         try {
           const vecResults = findNearestVectors(queryVector, maxResults);
           hasVec = vecResults.length > 0;

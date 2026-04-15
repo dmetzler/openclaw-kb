@@ -138,6 +138,6 @@ describe('Public API Exports', () => {
 
   it('EMBEDDING_DIMENSIONS is exported as a number', () => {
     expect(typeof EMBEDDING_DIMENSIONS).toBe('number');
-    expect(EMBEDDING_DIMENSIONS).toBe(384);
+    expect(EMBEDDING_DIMENSIONS).toBe(768);
   });
 });

@@ -16,7 +16,7 @@ let db = null;
 let exitHandlersRegistered = false;
 
 /** Default embedding vector dimensions. Must match vec0 table creation. */
-export const EMBEDDING_DIMENSIONS = 384;
+export const EMBEDDING_DIMENSIONS = 768;
 
 /** Chunk embedding vector dimensions. Must match vec_chunks vec0 table creation. */
 export const CHUNK_EMBEDDING_DIMENSIONS = 768;
