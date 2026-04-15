@@ -233,7 +233,7 @@ function migrateRelations(kgData, idMap, options) {
   for (const rel of relations) {
     const fromId = rel.from;
     const toId = rel.to;
-    const relType = rel.rel;
+    const relType = rel.rel || rel.label || rel.type;
     const metadata = (rel.attrs && typeof rel.attrs === 'object' && !Array.isArray(rel.attrs))
       ? rel.attrs
       : {};
