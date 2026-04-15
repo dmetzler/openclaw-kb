@@ -12,6 +12,9 @@ let exitHandlersRegistered = false;
 /** Default embedding vector dimensions. Must match vec0 table creation. */
 export const EMBEDDING_DIMENSIONS = 384;
 
+/** Chunk embedding vector dimensions. Must match vec_chunks vec0 table creation. */
+export const CHUNK_EMBEDDING_DIMENSIONS = 768;
+
 /**
  * Opens (or creates) the SQLite database, applies pragmas, loads extensions,
  * initializes schema if needed, and runs pending migrations.
@@ -805,4 +808,153 @@ export function importDataRecord(row) {
 export function runTransaction(fn) {
   const transaction = _getDb().transaction(fn);
   return transaction();
+}
+
+// ---------------------------------------------------------------------------
+// Chunk CRUD & Chunk Embedding Operations
+// ---------------------------------------------------------------------------
+
+/**
+ * Inserts a new chunk for an entity.
+ *
+ * @param {number} entityId - FK to entities.id.
+ * @param {number} chunkIndex - Position within the entity (0-based).
+ * @param {string} content - Chunk text content.
+ * @param {Object} [metadata={}] - JSON-serializable metadata.
+ * @returns {number} Inserted chunk ID.
+ * @throws {Error} If entity does not exist or content is empty.
+ */
+export function insertChunk(entityId, chunkIndex, content, metadata = {}) {
+  if (!getEntity(entityId)) {
+    throw new Error(`Entity with id ${entityId} not found`);
+  }
+
+  if (!content || typeof content !== 'string' || content.trim().length === 0) {
+    throw new Error('Chunk content must be a non-empty string');
+  }
+
+  const result = _getDb()
+    .prepare('INSERT INTO chunks (entity_id, chunk_index, content, metadata) VALUES (?, ?, ?, ?)')
+    .run(entityId, chunkIndex, content, JSON.stringify(metadata));
+
+  return result.lastInsertRowid;
+}
+
+/**
+ * Returns all chunks for an entity, ordered by chunk_index ASC.
+ *
+ * @param {number} entityId - Entity ID.
+ * @returns {{ id: number, entity_id: number, chunk_index: number, content: string, metadata: Object, created_at: string }[]}
+ */
+export function getChunks(entityId) {
+  return _getDb()
+    .prepare('SELECT * FROM chunks WHERE entity_id = ? ORDER BY chunk_index ASC')
+    .all(entityId)
+    .map((row) => ({ ...row, metadata: JSON.parse(row.metadata) }));
+}
+
+/**
+ * Deletes all chunks for an entity. CASCADE deletes vec_chunks entries
+ * and FTS5 index entries via triggers.
+ *
+ * @param {number} entityId - Entity ID.
+ * @returns {number} Number of deleted chunks.
+ */
+export function deleteChunksForEntity(entityId) {
+  const result = _getDb()
+    .prepare('DELETE FROM chunks WHERE entity_id = ?')
+    .run(entityId);
+
+  return result.changes;
+}
+
+/**
+ * Stores or replaces a 768-dimensional vector embedding for a chunk.
+ *
+ * @param {number} chunkId - FK to chunks.id.
+ * @param {Float32Array} vector - 768-dimensional embedding vector.
+ * @throws {Error} If vector dimensions don't match CHUNK_EMBEDDING_DIMENSIONS.
+ */
+export function upsertChunkEmbedding(chunkId, vector) {
+  const arr = vector instanceof Float32Array ? vector : new Float32Array(vector);
+
+  if (arr.length !== CHUNK_EMBEDDING_DIMENSIONS) {
+    throw new Error(
+      `Vector must have ${CHUNK_EMBEDDING_DIMENSIONS} dimensions, got ${arr.length}`,
+    );
+  }
+
+  const database = _getDb();
+  database.prepare('DELETE FROM vec_chunks WHERE chunk_id = ?').run(BigInt(chunkId));
+  database
+    .prepare('INSERT INTO vec_chunks(chunk_id, embedding) VALUES (?, ?)')
+    .run(BigInt(chunkId), arr);
+}
+
+/**
+ * Performs K-nearest-neighbor vector search on chunk embeddings.
+ *
+ * @param {Float32Array|number[]} queryVector - 768-dimensional query vector.
+ * @param {number} [k=20] - Number of nearest neighbors to return.
+ * @returns {{ chunk_id: number, distance: number }[]} Results sorted by distance ASC.
+ * @throws {Error} If vector dimensions don't match CHUNK_EMBEDDING_DIMENSIONS.
+ */
+export function findNearestChunks(queryVector, k = 20) {
+  const arr = queryVector instanceof Float32Array ? queryVector : new Float32Array(queryVector);
+
+  if (arr.length !== CHUNK_EMBEDDING_DIMENSIONS) {
+    throw new Error(
+      `Vector must have ${CHUNK_EMBEDDING_DIMENSIONS} dimensions, got ${arr.length}`,
+    );
+  }
+
+  const rows = _getDb()
+    .prepare(
+      'SELECT chunk_id, distance FROM vec_chunks WHERE embedding MATCH ? ORDER BY distance LIMIT ?',
+    )
+    .all(arr, k);
+
+  return rows.map((row) => ({ chunk_id: Number(row.chunk_id), distance: row.distance }));
+}
+
+/**
+ * Returns a chunk record joined with its parent entity.
+ * Used to enrich search results with entity context.
+ *
+ * @param {number} chunkId - Chunk ID.
+ * @returns {{ chunk: Object, entity: Object }|null}
+ */
+export function getChunkWithEntity(chunkId) {
+  const row = _getDb()
+    .prepare(
+      `SELECT c.id AS c_id, c.entity_id, c.chunk_index, c.content, c.metadata AS c_metadata, c.created_at AS c_created_at,
+              e.id AS e_id, e.name, e.type, e.metadata AS e_metadata, e.created_at AS e_created_at, e.updated_at
+       FROM chunks c
+       JOIN entities e ON e.id = c.entity_id
+       WHERE c.id = ?`,
+    )
+    .get(chunkId);
+
+  if (!row) {
+    return null;
+  }
+
+  return {
+    chunk: {
+      id: row.c_id,
+      entity_id: row.entity_id,
+      chunk_index: row.chunk_index,
+      content: row.content,
+      metadata: JSON.parse(row.c_metadata),
+      created_at: row.c_created_at,
+    },
+    entity: {
+      id: row.e_id,
+      name: row.name,
+      type: row.type,
+      metadata: JSON.parse(row.e_metadata),
+      created_at: row.e_created_at,
+      updated_at: row.updated_at,
+    },
+  };
 }
