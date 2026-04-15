@@ -6,10 +6,14 @@ import yaml from 'js-yaml';
 import {
   createEntity,
   updateEntity,
+  getEntity,
+  getRelationsFrom,
+  getRelationsTo,
+  getAllEntities,
 } from './db.mjs';
 
 /** Wiki subdirectory types. */
-const WIKI_TYPES = ['entities', 'concepts', 'topics', 'comparisons'];
+const WIKI_TYPES = ['entities', 'concepts', 'topics', 'comparisons', 'sources'];
 
 /** Map entity type → subdirectory name. */
 const TYPE_TO_DIR = {
@@ -17,6 +21,7 @@ const TYPE_TO_DIR = {
   concept: 'concepts',
   topic: 'topics',
   comparison: 'comparisons',
+  source: 'sources',
 };
 
 /** gray-matter options with JSON_SCHEMA engine for date safety. */
@@ -98,7 +103,7 @@ export function createPage(entity, rawFile, options = {}) {
     throw new Error('Entity name must be a non-empty string');
   }
 
-  const validTypes = ['entity', 'concept', 'topic', 'comparison'];
+  const validTypes = ['entity', 'concept', 'topic', 'comparison', 'source'];
   if (!validTypes.includes(entity.type)) {
     throw new Error(`Invalid entity type: ${entity.type}`);
   }
@@ -145,6 +150,16 @@ export function createPage(entity, rawFile, options = {}) {
   if (entity.description) {
     body += `${_stripHtml(entity.description)}\n`;
   }
+
+  // For source-type pages, list all mentioned concepts/entities
+  if (entity.type === 'source') {
+    body += _buildMentionedEntitiesSection(kgEntity.id);
+  }
+
+  // Append auto-generated cross-reference sections
+  body += _buildRelationsSection(kgEntity.id, options.relations);
+  body += _buildSourcesSection([rawFile]);
+  body += _buildDataviewBlock();
 
   const filePath = join(dirPath, fileName);
   const output = matter.stringify(body, frontmatter, MATTER_OPTIONS);
@@ -201,6 +216,19 @@ export function updatePage(fileName, newEntity, rawFile, options = {}) {
       existingContent += newSection;
     }
   }
+
+  // Strip old auto-generated sections and rebuild them
+  existingContent = _stripGeneratedSections(existingContent);
+
+  // For source-type pages, list all mentioned concepts/entities
+  if (file.data.type === 'source' && file.data.kg_id) {
+    existingContent += _buildMentionedEntitiesSection(file.data.kg_id);
+  }
+
+  // Regenerate cross-reference sections
+  existingContent += _buildRelationsSection(file.data.kg_id, options.relations);
+  existingContent += _buildSourcesSection(file.data.sources);
+  existingContent += _buildDataviewBlock();
 
   // Update KG entity
   if (file.data.kg_id) {
@@ -262,7 +290,7 @@ export function findPage(entityName, options = {}) {
   }
 
   // Also check disambiguated names (with type suffix)
-  for (const type of ['entity', 'concept', 'topic', 'comparison']) {
+  for (const type of ['entity', 'concept', 'topic', 'comparison', 'source']) {
     const disambiguated = `${slug}-${type}.md`;
     const result = _findFileAcrossWiki(disambiguated, wikiDir);
     if (result) {
@@ -341,6 +369,7 @@ export function regenerateIndex(options = {}) {
     Concepts: [],
     Topics: [],
     Comparisons: [],
+    Sources: [],
   };
 
   const dirToGroup = {
@@ -348,6 +377,7 @@ export function regenerateIndex(options = {}) {
     concepts: 'Concepts',
     topics: 'Topics',
     comparisons: 'Comparisons',
+    sources: 'Sources',
   };
 
   let pageCount = 0;
@@ -397,7 +427,224 @@ export function regenerateIndex(options = {}) {
   return { pageCount, filePath };
 }
 
+/**
+ * Re-reads ALL entities from SQLite with their relations and regenerates
+ * every wiki page's cross-reference sections (Relations, Sources, Mentioned in,
+ * Mentioned Entities). For bulk refresh after migration.
+ *
+ * @param {Object} [options]
+ * @param {string} [options.wikiDir='wiki'] - Root directory for wiki pages.
+ * @returns {{ regenerated: number, errors: string[] }}
+ */
+export function regenerateAllPages(options = {}) {
+  const wikiDir = options.wikiDir || 'wiki';
+  const stats = { regenerated: 0, errors: [] };
+
+  for (const subDir of WIKI_TYPES) {
+    const dirPath = join(wikiDir, subDir);
+    if (!existsSync(dirPath)) continue;
+
+    const files = readdirSync(dirPath).filter(f => f.endsWith('.md'));
+    for (const file of files) {
+      const filePath = join(dirPath, file);
+      try {
+        const raw = readFileSync(filePath, 'utf8');
+        const parsed = matter(raw, MATTER_OPTIONS);
+
+        // Strip old generated sections
+        let content = _stripGeneratedSections(parsed.content);
+
+        const kgId = parsed.data.kg_id;
+        const pageType = parsed.data.type;
+
+        // For source pages, add mentioned entities
+        if (pageType === 'source' && kgId) {
+          content += _buildMentionedEntitiesSection(kgId);
+        }
+
+        // Rebuild cross-reference sections
+        content += _buildRelationsSection(kgId);
+        content += _buildSourcesSection(parsed.data.sources);
+        content += _buildDataviewBlock();
+
+        // Update timestamp
+        parsed.data.updated = new Date().toISOString();
+
+        const output = matter.stringify(content, parsed.data, MATTER_OPTIONS);
+        writeFileSync(filePath, output, 'utf8');
+        stats.regenerated++;
+      } catch (err) {
+        stats.errors.push(`${file}: ${err.message}`);
+      }
+    }
+  }
+
+  return stats;
+}
+
 // --- Internal helpers ---
+
+/**
+ * Builds a ## Relations section with [[wikilinks]] grouped by relation type.
+ * Reads relations from SQLite via getRelationsFrom/getRelationsTo.
+ *
+ * @param {number} kgId - Entity KG ID.
+ * @param {Array} [explicitRelations] - Optional pre-supplied relations array.
+ * @returns {string} Markdown section (empty string if no relations).
+ */
+function _buildRelationsSection(kgId, explicitRelations) {
+  let relations = explicitRelations || [];
+
+  if (relations.length === 0 && kgId) {
+    try {
+      const outgoing = getRelationsFrom(kgId);
+      const incoming = getRelationsTo(kgId);
+      relations = [
+        ...outgoing.map(r => ({ ...r, direction: 'outgoing' })),
+        ...incoming.map(r => ({ ...r, direction: 'incoming' })),
+      ];
+    } catch {
+      // DB may not be initialized — continue gracefully
+    }
+  }
+
+  if (relations.length === 0) return '';
+
+  // Group by relation type
+  const grouped = {};
+  for (const rel of relations) {
+    const type = rel.type || 'related';
+    if (!grouped[type]) grouped[type] = [];
+
+    // Resolve the target/source entity name
+    const targetId = rel.direction === 'incoming' ? rel.source_id : rel.target_id;
+    try {
+      const targetEntity = getEntity(targetId);
+      if (targetEntity) {
+        const slug = slugify(targetEntity.name);
+        grouped[type].push({ slug, name: targetEntity.name });
+      }
+    } catch {
+      // Entity may not exist — skip
+    }
+  }
+
+  // Check if anything resolved
+  const hasEntries = Object.values(grouped).some(arr => arr.length > 0);
+  if (!hasEntries) return '';
+
+  let section = '\n## Relations\n\n';
+  for (const [type, entries] of Object.entries(grouped)) {
+    if (entries.length === 0) continue;
+    section += `**${type}**:\n`;
+    for (const entry of entries) {
+      section += `- [[${entry.slug}|${entry.name}]]\n`;
+    }
+    section += '\n';
+  }
+
+  return section;
+}
+
+/**
+ * Builds a ## Sources section listing raw/ file references as [[wikilinks]].
+ *
+ * @param {string[]} sources - Array of raw file names.
+ * @returns {string} Markdown section (empty string if no sources).
+ */
+function _buildSourcesSection(sources) {
+  if (!sources || sources.length === 0) return '';
+
+  let section = '\n## Sources\n\n';
+  for (const src of sources) {
+    const display = src
+      .replace(/\.md$/, '')
+      .replace(/^\d{4}-\d{2}-\d{2}-/, '')
+      .split('-')
+      .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ');
+    const link = `raw/${src.replace(/\.md$/, '')}`;
+    section += `- [[${link}|${display}]]\n`;
+  }
+
+  return section;
+}
+
+/**
+ * Builds an Obsidian Dataview backlinks block.
+ *
+ * @returns {string} Markdown section with dataview query.
+ */
+function _buildDataviewBlock() {
+  return '\n## Mentioned in\n\n```dataview\nLIST FROM [[]] AND !"templates"\n```\n';
+}
+
+/**
+ * Builds a ## Mentioned Entities section for source-type pages.
+ * Lists all concepts/entities mentioned in the source as [[wikilinks]].
+ *
+ * @param {number} kgId - Entity KG ID (the source entity).
+ * @returns {string} Markdown section (empty string if no mentioned entities).
+ */
+function _buildMentionedEntitiesSection(kgId) {
+  if (!kgId) return '';
+
+  let mentioned = [];
+  try {
+    const outgoing = getRelationsFrom(kgId);
+    for (const rel of outgoing) {
+      const target = getEntity(rel.target_id);
+      if (target && target.type !== 'source') {
+        const slug = slugify(target.name);
+        mentioned.push({ slug, name: target.name });
+      }
+    }
+  } catch {
+    // DB may not be initialized
+  }
+
+  if (mentioned.length === 0) return '';
+
+  // Deduplicate by slug
+  const seen = new Set();
+  mentioned = mentioned.filter(m => {
+    if (seen.has(m.slug)) return false;
+    seen.add(m.slug);
+    return true;
+  });
+
+  let section = '\n## Mentioned Entities\n\n';
+  for (const entry of mentioned) {
+    section += `- [[${entry.slug}|${entry.name}]]\n`;
+  }
+
+  return section;
+}
+
+/**
+ * Strips auto-generated sections (Relations, Sources, Mentioned in,
+ * Mentioned Entities) from page body content so they can be regenerated.
+ *
+ * @param {string} content - Existing page body content.
+ * @returns {string} Content with generated sections removed.
+ */
+function _stripGeneratedSections(content) {
+  // Remove each known generated section (heading + content until next ## or end)
+  const sectionPatterns = [
+    /\n## Relations\n[\s\S]*?(?=\n## (?!Relations)|$)/,
+    /\n## Sources\n[\s\S]*?(?=\n## (?!Sources)|$)/,
+    /\n## Mentioned in\n[\s\S]*?(?=\n## (?!Mentioned in)|$)/,
+    /\n## Mentioned Entities\n[\s\S]*?(?=\n## (?!Mentioned Entities)|$)/,
+  ];
+
+  let result = content;
+  for (const pattern of sectionPatterns) {
+    result = result.replace(pattern, '');
+  }
+
+  // Trim trailing whitespace but keep a trailing newline
+  return result.replace(/\s+$/, '\n');
+}
 
 /**
  * Searches all wiki subdirectories for a file by name.
@@ -411,6 +658,7 @@ function _findFileAcrossWiki(fileName, wikiDir) {
     concepts: 'concept',
     topics: 'topic',
     comparisons: 'comparison',
+    sources: 'source',
   };
 
   for (const subDir of WIKI_TYPES) {

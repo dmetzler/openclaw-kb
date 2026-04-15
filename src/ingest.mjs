@@ -451,7 +451,7 @@ export async function ingestText(title, text, llm, options = {}) {
  * @param {string} wikiDir
  */
 function _ensureWikiDirs(wikiDir) {
-  for (const subDir of ['entities', 'concepts', 'topics', 'comparisons']) {
+  for (const subDir of ['entities', 'concepts', 'topics', 'comparisons', 'sources']) {
     mkdirSync(join(wikiDir, subDir), { recursive: true });
   }
 }
