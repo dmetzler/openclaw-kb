@@ -1,11 +1,13 @@
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import matter from 'gray-matter';
 import yaml from 'js-yaml';
 import { fetchUrl } from './fetcher.mjs';
 import { extract } from './extractor.mjs';
 import { chunkMarkdown } from './chunker.mjs';
 import { embedBatch } from './embedder.mjs';
+import { createLLMProvider } from './llm-provider.mjs';
 import {
   rawFileName as generateRawFileName,
   createPage,
@@ -15,6 +17,8 @@ import {
   appendLog,
 } from './wiki.mjs';
 import {
+  initDatabase,
+  closeDatabase,
   createRelation,
   insertChunk,
   deleteChunksForEntity,
@@ -75,7 +79,7 @@ function archiveRawSource({ title, content, source, author, tags = [] }, options
  * creates/updates wiki pages and KG entities, regenerates the index, and appends to the log.
  *
  * @param {string} url - URL to fetch and ingest. Must be a valid HTTP/HTTPS URL.
- * @param {import('./extractor.mjs').LLMProvider} llm - Provider-agnostic LLM interface.
+ * @param {import('./extractor.mjs').LLMProvider} [llm] - Provider-agnostic LLM interface. Auto-detected if omitted.
  * @param {Object} [options]
  * @param {string} [options.wikiDir='wiki'] - Root directory for wiki pages.
  * @param {string} [options.rawDir='raw'] - Root directory for raw source files.
@@ -84,6 +88,14 @@ function archiveRawSource({ title, content, source, author, tags = [] }, options
  * @throws {Error} If URL is invalid or fetch fails.
  */
 export async function ingestUrl(url, llm, options = {}) {
+  if (llm && typeof llm !== 'object') {
+    // Shift: ingestUrl(url, options) — llm omitted
+    options = llm;
+    llm = undefined;
+  }
+  if (!llm || typeof llm.complete !== 'function') {
+    llm = await createLLMProvider();
+  }
   const wikiDir = options.wikiDir || 'wiki';
   const rawDir = options.rawDir || 'raw';
   const fetchTimeout = options.fetchTimeout || 15000;
@@ -265,7 +277,7 @@ export async function ingestUrl(url, llm, options = {}) {
  *
  * @param {string} title - Title for the raw source file. Non-empty.
  * @param {string} text - Raw text content to ingest. Non-empty.
- * @param {import('./extractor.mjs').LLMProvider} llm - Provider-agnostic LLM interface.
+ * @param {import('./extractor.mjs').LLMProvider} [llm] - Provider-agnostic LLM interface. Auto-detected if omitted.
  * @param {Object} [options]
  * @param {string} [options.wikiDir='wiki'] - Root directory for wiki pages.
  * @param {string} [options.rawDir='raw'] - Root directory for raw source files.
@@ -273,6 +285,13 @@ export async function ingestUrl(url, llm, options = {}) {
  * @throws {Error} If title or text is empty.
  */
 export async function ingestText(title, text, llm, options = {}) {
+  if (llm && typeof llm !== 'object') {
+    options = llm;
+    llm = undefined;
+  }
+  if (!llm || typeof llm.complete !== 'function') {
+    llm = await createLLMProvider();
+  }
   if (!title || typeof title !== 'string' || title.trim().length === 0) {
     throw new Error('Title must be a non-empty string');
   }
@@ -435,4 +454,135 @@ function _ensureWikiDirs(wikiDir) {
   for (const subDir of ['entities', 'concepts', 'topics', 'comparisons']) {
     mkdirSync(join(wikiDir, subDir), { recursive: true });
   }
+}
+
+// ---- CLI entry point ----
+
+/**
+ * Parses CLI arguments for the ingest command.
+ * @param {string[]} argv
+ * @returns {{ url?: string, file?: string, db?: string, verbose?: boolean }}
+ */
+export function parseArgs(argv) {
+  const options = {};
+
+  for (let i = 0; i < argv.length; i += 1) {
+    const arg = argv[i];
+
+    if (arg === '--url') {
+      const value = argv[i + 1];
+      if (!value || value.startsWith('--')) {
+        throw new Error('Missing value for --url');
+      }
+      options.url = value;
+      i += 1;
+    } else if (arg === '--file') {
+      const value = argv[i + 1];
+      if (!value || value.startsWith('--')) {
+        throw new Error('Missing value for --file');
+      }
+      options.file = value;
+      i += 1;
+    } else if (arg === '--db') {
+      const value = argv[i + 1];
+      if (!value || value.startsWith('--')) {
+        throw new Error('Missing value for --db');
+      }
+      options.db = value;
+      i += 1;
+    } else if (arg === '--verbose') {
+      options.verbose = true;
+    } else if (arg.startsWith('http://') || arg.startsWith('https://')) {
+      // Bare URL without --url flag
+      options.url = arg;
+    } else if (existsSync(arg)) {
+      // Bare file path without --file flag
+      options.file = arg;
+    } else {
+      throw new Error(`Unknown argument: ${arg}`);
+    }
+  }
+
+  return options;
+}
+
+const isMainModule = process.argv[1]
+  && import.meta.url === pathToFileURL(process.argv[1]).href;
+
+if (isMainModule) {
+  const args = process.argv.slice(2);
+
+  if (args.length === 0) {
+    process.stderr.write(
+      'Usage: node src/ingest.mjs [--url] <url> [--file <path>] [--db <path>] [--verbose]\n\n'
+      + 'Examples:\n'
+      + '  node src/ingest.mjs https://example.com/article\n'
+      + '  node src/ingest.mjs --url https://example.com/article\n'
+      + '  node src/ingest.mjs --file path/to/document.pdf\n'
+      + '  node src/ingest.mjs --file doc.pdf --db custom.db --verbose\n',
+    );
+    process.exit(1);
+  }
+
+  let parsed;
+  try {
+    parsed = parseArgs(args);
+  } catch (error) {
+    process.stderr.write(`Error: ${error.message}\n`);
+    process.exit(1);
+  }
+
+  if (!parsed.url && !parsed.file) {
+    process.stderr.write('Error: Provide a URL or --file <path>\n');
+    process.exit(1);
+  }
+
+  const dbPath = parsed.db || 'jarvis.db';
+  const verbose = parsed.verbose === true;
+
+  const log = (msg) => { if (verbose) console.log(msg); };
+
+  (async () => {
+    try {
+      initDatabase(dbPath);
+      log(`Database: ${dbPath}`);
+
+      const llm = await createLLMProvider();
+      log('LLM provider ready');
+
+      if (parsed.url) {
+        log(`Ingesting URL: ${parsed.url}`);
+        const result = await ingestUrl(parsed.url, llm);
+        console.log(
+          `Ingested URL: ${parsed.url}\n`
+          + `  raw file:  ${result.rawFile}\n`
+          + `  pages:     ${result.pagesCreated.length} created, ${result.pagesUpdated.length} updated\n`
+          + `  entities:  ${result.entitiesCreated}\n`
+          + `  relations: ${result.relationsCreated}\n`
+          + `  chunks:    ${result.chunks.total} (${result.chunks.embedded} embedded)`,
+        );
+      }
+
+      if (parsed.file) {
+        const { ingestFile } = await import('./ingest-file.mjs');
+        log(`Ingesting file: ${parsed.file}`);
+        const result = await ingestFile(parsed.file, llm, { verbose });
+        console.log(
+          `Ingested file: ${parsed.file}\n`
+          + `  format:    ${result.format}\n`
+          + `  title:     ${result.title}\n`
+          + `  entities:  ${result.entities.length}\n`
+          + `  relations: ${result.relations.length}\n`
+          + `  chunks:    ${result.chunks.total} (${result.chunks.embedded} embedded)\n`
+          + `  pages:     ${result.pages.length}`,
+        );
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error(`Ingestion failed: ${message}`);
+      process.exitCode = 1;
+    } finally {
+      closeDatabase();
+    }
+  })();
 }

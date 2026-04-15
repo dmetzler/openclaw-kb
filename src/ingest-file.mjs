@@ -14,6 +14,7 @@ import {
   createRelation,
 } from './db.mjs';
 import { extract } from './extractor.mjs';
+import { createLLMProvider } from './llm-provider.mjs';
 import {
   rawFileName,
   createPage,
@@ -97,7 +98,7 @@ function _logVerbose(verbose, message) {
  * creating wiki/KG records, chunking, and embedding.
  *
  * @param {string} filePath - Absolute or relative path to the file.
- * @param {import('./extractor.mjs').LLMProvider} llm - Provider-agnostic LLM interface.
+ * @param {import('./extractor.mjs').LLMProvider} [llm] - Provider-agnostic LLM interface. Auto-detected if omitted.
  * @param {Object} [options]
  * @param {boolean} [options.skipEmbedding=false] - Skip embeddings when true.
  * @param {boolean} [options.verbose=false] - Log progress when true.
@@ -106,6 +107,13 @@ function _logVerbose(verbose, message) {
  * @returns {Promise<{ title: string, source: string, format: string, entities: Array<{ id: number, name: string, type: string }>, relations: Array<{ id: number, source: number, target: number, type: string }>, chunks: { total: number, embedded: number }, pages: string[] }>}
  */
 export async function ingestFile(filePath, llm, options = {}) {
+  if (llm && typeof llm !== 'object') {
+    options = llm;
+    llm = undefined;
+  }
+  if (!llm || typeof llm.complete !== 'function') {
+    llm = await createLLMProvider();
+  }
   const wikiDir = options.wikiDir || 'wiki';
   const rawDir = options.rawDir || 'raw';
   const skipEmbedding = options.skipEmbedding === true;
