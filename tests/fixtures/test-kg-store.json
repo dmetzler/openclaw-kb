@@ -1,0 +1,67 @@
+{
+  "version": 2,
+  "meta": {
+    "exportedAt": "2025-03-15T10:00:00Z",
+    "source": "openclaw-test"
+  },
+  "categories": {
+    "people": { "color": "#4a90d9" },
+    "projects": { "color": "#7ed321" },
+    "concepts": { "color": "#f5a623" }
+  },
+  "nodes": [
+    {
+      "id": "damien",
+      "label": "Damien",
+      "type": "human",
+      "category": "people",
+      "attrs": { "role": "founder" },
+      "tags": ["owner", "engineer"],
+      "children": [],
+      "created": "2024-01-15T08:00:00Z",
+      "updated": "2025-03-10T12:30:00Z",
+      "confidence": 0.99
+    },
+    {
+      "id": "openclaw",
+      "label": "OpenClaw",
+      "type": "project",
+      "category": "projects",
+      "attrs": { "status": "active", "lang": "javascript" },
+      "tags": ["ai", "knowledge-graph"],
+      "children": ["kb-module", "api-module"],
+      "created": "2024-06-01T10:00:00Z",
+      "updated": "2025-03-14T09:00:00Z",
+      "confidence": 0.95
+    },
+    {
+      "id": "knowledge-graph",
+      "label": "Knowledge Graph",
+      "type": "concept",
+      "category": "concepts",
+      "attrs": {},
+      "tags": ["ai"],
+      "children": [],
+      "created": "2024-01-20T14:00:00Z",
+      "updated": "2024-01-20T14:00:00Z",
+      "confidence": 1.0
+    },
+    {
+      "id": "sqlite",
+      "label": "SQLite",
+      "type": "tool",
+      "category": "concepts",
+      "attrs": { "version": "3.45" },
+      "tags": ["database"],
+      "children": [],
+      "created": "2024-02-01T09:00:00Z",
+      "updated": "2024-02-01T09:00:00Z",
+      "confidence": 1.0
+    }
+  ],
+  "edges": [
+    { "from": "damien", "to": "openclaw", "rel": "created", "attrs": { "year": "2024" } },
+    { "from": "openclaw", "to": "knowledge-graph", "rel": "uses", "attrs": {} },
+    { "from": "openclaw", "to": "sqlite", "rel": "depends_on", "attrs": { "critical": true } }
+  ]
+}

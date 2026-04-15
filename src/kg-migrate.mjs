@@ -24,6 +24,36 @@ import {
 } from './db.mjs';
 
 /**
+ * Detects the format version of a kg-store JSON structure and normalises it
+ * to the internal representation expected by migrateEntities / migrateRelations.
+ *
+ * Supported formats:
+ *   v1 (legacy) — { entities: { id: {…} }, relations: [{…}] }
+ *   v2 (real)   — { version: 2, nodes: [{…}], edges: [{…}], categories: {…}, meta: {…} }
+ *
+ * @param {Object} raw - Parsed JSON content.
+ * @returns {{ entities: Object<string, Object>, relations: Array<Object> }}
+ */
+export function normalizeInput(raw) {
+  // v2: top-level "nodes" array
+  if (Array.isArray(raw.nodes)) {
+    const entities = {};
+    for (const node of raw.nodes) {
+      const id = node.id;
+      if (id == null) continue;
+      entities[String(id)] = node;
+    }
+    return { entities, relations: raw.edges || [] };
+  }
+
+  // v1 (legacy): top-level "entities" object (or empty)
+  return {
+    entities: raw.entities || {},
+    relations: raw.relations || [],
+  };
+}
+
+/**
  * Builds a metadata object from a legacy entity, packing optional fields
  * and flattening attrs at the top level. Omits absent/null/empty fields.
  *
@@ -51,6 +81,19 @@ export function buildMetadata(legacyEntity) {
 
   if (legacyEntity.wikiPage && legacyEntity.wikiPage !== '') {
     metadata.wikiPage = legacyEntity.wikiPage;
+  }
+
+  // v2 fields: children, created, updated
+  if (Array.isArray(legacyEntity.children) && legacyEntity.children.length > 0) {
+    metadata.children = legacyEntity.children;
+  }
+
+  if (legacyEntity.created && legacyEntity.created !== '') {
+    metadata.created = legacyEntity.created;
+  }
+
+  if (legacyEntity.updated && legacyEntity.updated !== '') {
+    metadata.updated = legacyEntity.updated;
   }
 
   const attrs = legacyEntity.attrs;
@@ -281,6 +324,9 @@ export function migrateKnowledgeGraph(filePath, dbPath = 'jarvis.db', options = 
     throw new Error(`Failed to parse ${filePath}: ${err.message}`);
   }
 
+  // Normalise v1/v2 input format to internal representation
+  const normalised = normalizeInput(kgData);
+
   // Initialize database
   initDatabase(dbPath);
 
@@ -297,13 +343,13 @@ export function migrateKnowledgeGraph(filePath, dbPath = 'jarvis.db', options = 
 
   if (dryRun) {
     // Dry run: no transaction needed
-    entityResult = migrateEntities(kgData, opts);
-    relationStats = migrateRelations(kgData, entityResult.idMap, opts);
+    entityResult = migrateEntities(normalised, opts);
+    relationStats = migrateRelations(normalised, entityResult.idMap, opts);
   } else {
     // Wrap entire migration in a transaction for atomicity
     runTransaction(() => {
-      entityResult = migrateEntities(kgData, opts);
-      relationStats = migrateRelations(kgData, entityResult.idMap, opts);
+      entityResult = migrateEntities(normalised, opts);
+      relationStats = migrateRelations(normalised, entityResult.idMap, opts);
     });
   }
 

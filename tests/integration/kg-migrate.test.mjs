@@ -10,7 +10,7 @@ import {
   getAllEntities,
   getAllRelations,
 } from '../../src/db.mjs';
-import { migrateKnowledgeGraph, buildMetadata } from '../../src/kg-migrate.mjs';
+import { migrateKnowledgeGraph, buildMetadata, normalizeInput } from '../../src/kg-migrate.mjs';
 
 let tmpDir;
 
@@ -559,4 +559,207 @@ describe('Performance', () => {
     expect(stats.entities.migrated).toBe(1000);
     expect(stats.relations.migrated + stats.relations.skipped).toBeGreaterThan(0);
   }, 30_000);
+});
+
+// ======================================================================
+// normalizeInput unit tests
+// ======================================================================
+
+describe('normalizeInput', () => {
+  it('passes through v1 format unchanged', () => {
+    const v1 = {
+      entities: { alice: { id: 'alice', label: 'Alice', type: 'human' } },
+      relations: [{ from: 'alice', to: 'bob', rel: 'knows', attrs: {} }],
+    };
+    const result = normalizeInput(v1);
+    expect(result.entities).toBe(v1.entities);
+    expect(result.relations).toBe(v1.relations);
+  });
+
+  it('converts v2 nodes array to entities object keyed by id', () => {
+    const v2 = {
+      version: 2,
+      nodes: [
+        { id: 'alice', label: 'Alice', type: 'human' },
+        { id: 'bob', label: 'Bob', type: 'human' },
+      ],
+      edges: [{ from: 'alice', to: 'bob', rel: 'knows', attrs: {} }],
+    };
+    const result = normalizeInput(v2);
+    expect(Object.keys(result.entities)).toEqual(['alice', 'bob']);
+    expect(result.entities.alice.label).toBe('Alice');
+    expect(result.relations).toBe(v2.edges);
+  });
+
+  it('handles empty v2 input', () => {
+    const result = normalizeInput({ version: 2, nodes: [], edges: [] });
+    expect(Object.keys(result.entities)).toHaveLength(0);
+    expect(result.relations).toHaveLength(0);
+  });
+
+  it('handles empty v1 input', () => {
+    const result = normalizeInput({});
+    expect(Object.keys(result.entities)).toHaveLength(0);
+    expect(result.relations).toHaveLength(0);
+  });
+
+  it('skips v2 nodes with null/undefined id', () => {
+    const v2 = {
+      nodes: [
+        { id: 'valid', label: 'Valid', type: 'human' },
+        { label: 'NoId', type: 'human' },
+        { id: null, label: 'NullId', type: 'human' },
+      ],
+      edges: [],
+    };
+    const result = normalizeInput(v2);
+    expect(Object.keys(result.entities)).toEqual(['valid']);
+  });
+});
+
+// ======================================================================
+// v2 format: end-to-end migration with test-kg-store.json fixture
+// ======================================================================
+
+describe('v2 format migration', () => {
+  it('migrates v2 nodes and edges from fixture file', () => {
+    const fixturePath = join(import.meta.dirname, '..', 'fixtures', 'test-kg-store.json');
+    const stats = migrateKnowledgeGraph(fixturePath, ':memory:', { silent: true });
+
+    expect(stats.entities.migrated).toBe(4);
+    expect(stats.entities.errors).toBe(0);
+    expect(stats.relations.migrated).toBe(3);
+    expect(stats.relations.errors).toBe(0);
+
+    const entities = getAllEntities();
+    expect(entities).toHaveLength(4);
+    expect(entities.map((e) => e.name).sort()).toEqual(
+      ['Damien', 'Knowledge Graph', 'OpenClaw', 'SQLite'],
+    );
+
+    const relations = getAllRelations();
+    expect(relations).toHaveLength(3);
+    expect(relations.map((r) => r.type).sort()).toEqual(['created', 'depends_on', 'uses']);
+  });
+
+  it('preserves v2-specific metadata (children, created, updated)', () => {
+    const fixturePath = join(import.meta.dirname, '..', 'fixtures', 'test-kg-store.json');
+    migrateKnowledgeGraph(fixturePath, ':memory:', { silent: true });
+
+    const entities = getAllEntities();
+    const openclaw = entities.find((e) => e.name === 'OpenClaw');
+    expect(openclaw.metadata.children).toEqual(['kb-module', 'api-module']);
+    expect(openclaw.metadata.created).toBe('2024-06-01T10:00:00Z');
+    expect(openclaw.metadata.updated).toBe('2025-03-14T09:00:00Z');
+    expect(openclaw.metadata.confidence).toBe(0.95);
+    expect(openclaw.metadata.tags).toEqual(['ai', 'knowledge-graph']);
+    expect(openclaw.metadata.status).toBe('active');
+    expect(openclaw.metadata.lang).toBe('javascript');
+  });
+
+  it('preserves relation attrs from v2 edges', () => {
+    const fixturePath = join(import.meta.dirname, '..', 'fixtures', 'test-kg-store.json');
+    migrateKnowledgeGraph(fixturePath, ':memory:', { silent: true });
+
+    const relations = getAllRelations();
+    const created = relations.find((r) => r.type === 'created');
+    expect(created.metadata).toEqual({ year: '2024' });
+    const dependsOn = relations.find((r) => r.type === 'depends_on');
+    expect(dependsOn.metadata).toEqual({ critical: true });
+  });
+
+  it('migrates inline v2 data with nodes array', () => {
+    const data = {
+      version: 2,
+      nodes: [
+        { id: 'n1', label: 'Node One', type: 'concept', attrs: {}, tags: [], children: [], created: '2024-01-01T00:00:00Z', updated: '2024-01-01T00:00:00Z', confidence: 0.8 },
+        { id: 'n2', label: 'Node Two', type: 'concept', attrs: {}, tags: [], children: [], created: '2024-01-01T00:00:00Z', updated: '2024-01-01T00:00:00Z', confidence: 0.9 },
+      ],
+      edges: [
+        { from: 'n1', to: 'n2', rel: 'related_to', attrs: {} },
+      ],
+      categories: {},
+      meta: {},
+    };
+    const filePath = createKgStoreFile(data);
+    const stats = migrateKnowledgeGraph(filePath, ':memory:', { silent: true });
+
+    expect(stats.entities.migrated).toBe(2);
+    expect(stats.relations.migrated).toBe(1);
+  });
+
+  it('dry-run works with v2 format', () => {
+    const data = {
+      version: 2,
+      nodes: [
+        { id: 'a', label: 'Alpha', type: 'concept', attrs: {}, tags: [], children: [], created: '2024-01-01T00:00:00Z', updated: '2024-01-01T00:00:00Z', confidence: 1.0 },
+        { id: 'b', label: 'Beta', type: 'concept', attrs: {}, tags: [], children: [], created: '2024-01-01T00:00:00Z', updated: '2024-01-01T00:00:00Z', confidence: 1.0 },
+      ],
+      edges: [
+        { from: 'a', to: 'b', rel: 'precedes', attrs: {} },
+      ],
+    };
+    const filePath = createKgStoreFile(data);
+    const stats = migrateKnowledgeGraph(filePath, ':memory:', { dryRun: true, silent: true });
+
+    expect(stats.entities.migrated).toBe(2);
+    expect(stats.relations.migrated).toBe(1);
+    expect(getAllEntities()).toHaveLength(0);
+    expect(getAllRelations()).toHaveLength(0);
+  });
+
+  it('v2 edge referencing missing node is skipped with error', () => {
+    const data = {
+      version: 2,
+      nodes: [
+        { id: 'x', label: 'X', type: 'concept', attrs: {}, tags: [], children: [], created: '2024-01-01T00:00:00Z', updated: '2024-01-01T00:00:00Z', confidence: 1.0 },
+      ],
+      edges: [
+        { from: 'x', to: 'missing', rel: 'points_to', attrs: {} },
+      ],
+    };
+    const filePath = createKgStoreFile(data);
+    const stats = migrateKnowledgeGraph(filePath, ':memory:', { silent: true });
+
+    expect(stats.entities.migrated).toBe(1);
+    expect(stats.relations.errors).toBe(1);
+    expect(stats.relations.migrated).toBe(0);
+  });
+});
+
+// ======================================================================
+// buildMetadata: v2-specific fields
+// ======================================================================
+
+describe('buildMetadata v2 fields', () => {
+  it('includes children, created, updated when present', () => {
+    const result = buildMetadata({
+      children: ['child-a', 'child-b'],
+      created: '2024-01-01T00:00:00Z',
+      updated: '2024-06-01T00:00:00Z',
+    });
+    expect(result).toEqual({
+      children: ['child-a', 'child-b'],
+      created: '2024-01-01T00:00:00Z',
+      updated: '2024-06-01T00:00:00Z',
+    });
+  });
+
+  it('omits empty children array', () => {
+    const result = buildMetadata({
+      children: [],
+      created: '2024-01-01T00:00:00Z',
+    });
+    expect(result).toEqual({
+      created: '2024-01-01T00:00:00Z',
+    });
+  });
+
+  it('omits absent/empty created and updated', () => {
+    const result = buildMetadata({
+      created: '',
+      updated: null,
+    });
+    expect(result).toEqual({});
+  });
 });
