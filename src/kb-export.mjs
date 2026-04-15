@@ -13,7 +13,6 @@
 
 import { mkdirSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { csvStringify } from './csv.mjs';
 import {
   initDatabase,
   closeDatabase,
@@ -22,10 +21,7 @@ import {
   getAllEntities,
   getAllRelations,
   getAllDataSources,
-  getAllHealthMetrics,
-  getAllActivities,
-  getAllGrades,
-  getAllMeals,
+  getAllDataRecords,
   getAllEmbeddings,
 } from './db.mjs';
 
@@ -43,30 +39,6 @@ function writeJsonl(filePath, rows) {
   }
   const content = rows.map((row) => JSON.stringify(row)).join('\n') + '\n';
   writeFileSync(filePath, content);
-}
-
-/**
- * Writes rows as RFC 4180 CSV to a file. Always includes header row.
- * Empty rows produce a header-only file.
- *
- * @param {string} filePath - Output file path.
- * @param {string[]} headers - Column names.
- * @param {Object[]} rows - Array of row objects.
- * @param {string[]} columns - Column keys to extract from each row (same order as headers).
- */
-function writeCsv(filePath, headers, rows, columns) {
-  const dataRows = rows.map((row) =>
-    columns.map((col) => {
-      const val = row[col];
-      // JSON fields (metadata, items, nutrition) come as objects from getAll*
-      // Serialize them back to JSON strings for CSV (FR-023)
-      if (val !== null && val !== undefined && typeof val === 'object') {
-        return JSON.stringify(val);
-      }
-      return val;
-    }),
-  );
-  writeFileSync(filePath, csvStringify(headers, dataRows));
 }
 
 /**
@@ -97,29 +69,10 @@ export function exportDatabase(outputDir, options = {}) {
   writeJsonl(join(outputDir, 'relations.jsonl'), relations);
   log(`  relations: ${relations.length} records`);
 
-  // Export health_metrics (CSV)
-  const hmHeaders = ['id', 'source_id', 'metric_type', 'value', 'unit', 'metadata', 'recorded_at', 'created_at'];
-  const healthMetrics = getAllHealthMetrics();
-  writeCsv(join(outputDir, 'health_metrics.csv'), hmHeaders, healthMetrics, hmHeaders);
-  log(`  health_metrics: ${healthMetrics.length} records`);
-
-  // Export activities (CSV)
-  const actHeaders = ['id', 'source_id', 'activity_type', 'duration_minutes', 'intensity', 'metadata', 'recorded_at', 'created_at'];
-  const activities = getAllActivities();
-  writeCsv(join(outputDir, 'activities.csv'), actHeaders, activities, actHeaders);
-  log(`  activities: ${activities.length} records`);
-
-  // Export grades (CSV)
-  const grHeaders = ['id', 'source_id', 'subject', 'score', 'scale', 'metadata', 'recorded_at', 'created_at'];
-  const grades = getAllGrades();
-  writeCsv(join(outputDir, 'grades.csv'), grHeaders, grades, grHeaders);
-  log(`  grades: ${grades.length} records`);
-
-  // Export meals (CSV)
-  const mlHeaders = ['id', 'source_id', 'meal_type', 'items', 'nutrition', 'metadata', 'recorded_at', 'created_at'];
-  const meals = getAllMeals();
-  writeCsv(join(outputDir, 'meals.csv'), mlHeaders, meals, mlHeaders);
-  log(`  meals: ${meals.length} records`);
+  // Export data_records (JSONL)
+  const dataRecords = getAllDataRecords();
+  writeJsonl(join(outputDir, 'data_records.jsonl'), dataRecords);
+  log(`  data_records: ${dataRecords.length} records`);
 
   // Export embeddings (JSONL) — convert Float32Array to regular array
   const rawEmbeddings = getAllEmbeddings();
@@ -139,7 +92,7 @@ export function exportDatabase(outputDir, options = {}) {
     record_counts: recordCounts,
   };
   writeFileSync(join(outputDir, 'metadata.json'), JSON.stringify(metadata, null, 2) + '\n');
-  log(`Export complete. 9 files written to ${outputDir}`);
+  log(`Export complete. 6 files written to ${outputDir}`);
 }
 
 // ---- CLI entry point ----

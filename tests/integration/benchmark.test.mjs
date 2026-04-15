@@ -9,7 +9,7 @@ import {
   upsertEmbedding,
   findNearestVectors,
   createDataSource,
-  insertHealthMetric,
+  insertRecord,
   EMBEDDING_DIMENSIONS,
 } from '../../src/db.mjs';
 
@@ -86,17 +86,17 @@ describe('Performance Benchmarks', () => {
         type: 'import',
       });
 
-      // Seed 10,000 health metric records (these get FTS-indexed via triggers)
-      for (let i = 0; i < 10000; i++) {
-        insertHealthMetric({
-          source_id: source.id,
-          metric_type: `metric_${i % 50}`,
-          value: Math.random() * 100,
-          unit: 'units',
-          metadata: { batch: Math.floor(i / 100) },
-          recorded_at: `2026-01-${String((i % 28) + 1).padStart(2, '0')}T12:00:00Z`,
-        });
-      }
+       // Seed 10,000 health metric records (these get FTS-indexed via triggers)
+       for (let i = 0; i < 10000; i++) {
+         insertRecord('health_metric', {
+           source_id: source.id,
+           recorded_at: `2026-01-${String((i % 28) + 1).padStart(2, '0')}T12:00:00Z`,
+           metric_type: `metric_${i % 50}`,
+           value: Math.random() * 100,
+           unit: 'units',
+           metadata: { batch: Math.floor(i / 100) },
+         });
+       }
 
       // Also count entities from the graph traversal test above
       // Total indexed records should be 1000 entities + 10000 health metrics

@@ -8,10 +8,7 @@ import {
   createEntity,
   createRelation,
   createDataSource,
-  insertHealthMetric,
-  insertActivity,
-  insertGrade,
-  insertMeal,
+  insertRecord,
   upsertEmbedding,
   EMBEDDING_DIMENSIONS,
 } from '../../src/db.mjs';
@@ -36,7 +33,6 @@ afterEach(() => {
  * float precision in embeddings, and JSON arrays/objects.
  */
 function seedComplexData() {
-  // Data sources
   const ds1 = createDataSource({
     name: 'fitbit-api',
     type: 'api',
@@ -48,7 +44,6 @@ function seedComplexData() {
     config: {},
   });
 
-  // Entities with complex metadata
   const e1 = createEntity({
     name: 'John "Johnny" Doe',
     type: 'person',
@@ -65,7 +60,6 @@ function seedComplexData() {
     metadata: { special: 'tab\there', unicode: '日本語' },
   });
 
-  // Relations
   createRelation({
     source_id: e1.id,
     target_id: e2.id,
@@ -79,8 +73,7 @@ function seedComplexData() {
     metadata: {},
   });
 
-  // Health metrics
-  insertHealthMetric({
+  insertRecord('health_metric', {
     source_id: ds1.id,
     metric_type: 'heart_rate',
     value: 72,
@@ -88,7 +81,7 @@ function seedComplexData() {
     recorded_at: '2026-04-10T08:00:00',
     metadata: { resting: true },
   });
-  insertHealthMetric({
+  insertRecord('health_metric', {
     source_id: ds1.id,
     metric_type: 'weight',
     value: 75.5,
@@ -97,8 +90,7 @@ function seedComplexData() {
     metadata: {},
   });
 
-  // Activities
-  insertActivity({
+  insertRecord('activity', {
     source_id: ds1.id,
     activity_type: 'running',
     duration_minutes: 30,
@@ -106,7 +98,7 @@ function seedComplexData() {
     recorded_at: '2026-04-10T07:00:00',
     metadata: { route: 'park loop' },
   });
-  insertActivity({
+  insertRecord('activity', {
     source_id: ds2.id,
     activity_type: 'yoga',
     duration_minutes: 60,
@@ -115,8 +107,7 @@ function seedComplexData() {
     metadata: {},
   });
 
-  // Grades
-  insertGrade({
+  insertRecord('grade', {
     source_id: ds2.id,
     subject: 'Mathematics',
     score: 95,
@@ -125,8 +116,7 @@ function seedComplexData() {
     metadata: { teacher: 'Dr. Smith' },
   });
 
-  // Meals with complex items/nutrition
-  insertMeal({
+  insertRecord('meal', {
     source_id: ds1.id,
     meal_type: 'breakfast',
     items: ['oatmeal', 'coffee', 'banana'],
@@ -134,7 +124,7 @@ function seedComplexData() {
     recorded_at: '2026-04-10T07:00:00',
     metadata: { location: 'home' },
   });
-  insertMeal({
+  insertRecord('meal', {
     source_id: ds2.id,
     meal_type: 'lunch',
     items: ['salad', 'sandwich'],
@@ -143,7 +133,6 @@ function seedComplexData() {
     metadata: {},
   });
 
-  // Embeddings with specific float values
   const vec1 = new Float32Array(EMBEDDING_DIMENSIONS);
   for (let i = 0; i < EMBEDDING_DIMENSIONS; i++) vec1[i] = (i - 192) / 100;
   upsertEmbedding(e1.id, vec1);

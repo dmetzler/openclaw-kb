@@ -10,14 +10,8 @@ import {
   getAllEntities,
   getAllRelations,
   getAllDataSources,
-  getAllHealthMetrics,
-  getAllActivities,
-  getAllGrades,
-  getAllMeals,
-  insertHealthMetric,
-  insertActivity,
-  insertGrade,
-  insertMeal,
+  getAllDataRecords,
+  insertRecord,
 } from '../../src/db.mjs';
 
 beforeEach(() => {
@@ -64,51 +58,34 @@ describe('getAll* functions return parsed JSON fields', () => {
     expect(sources[0].name).toBe('fitbit');
   });
 
-  it('getAllHealthMetrics returns metrics with parsed metadata', () => {
-    const src = createDataSource({ name: 'hm-src', type: 'manual' });
-    insertHealthMetric({ source_id: src.id, metric_type: 'weight', value: 80, unit: 'kg', recorded_at: '2026-04-14T10:00:00Z', metadata: { resting: true } });
-
-    const metrics = getAllHealthMetrics();
-    expect(metrics).toHaveLength(1);
-    expect(metrics[0].metadata).toEqual({ resting: true });
-    expect(metrics[0].value).toBe(80);
-  });
-
-  it('getAllActivities returns activities with parsed metadata', () => {
-    const src = createDataSource({ name: 'act-src', type: 'manual' });
-    insertActivity({ source_id: src.id, activity_type: 'running', duration_minutes: 30, intensity: 'moderate', recorded_at: '2026-04-14T07:00:00Z' });
-
-    const activities = getAllActivities();
-    expect(activities).toHaveLength(1);
-    expect(activities[0].activity_type).toBe('running');
-    expect(activities[0].metadata).toEqual({});
-  });
-
-  it('getAllGrades returns grades with parsed metadata', () => {
-    const src = createDataSource({ name: 'grade-src', type: 'manual' });
-    insertGrade({ source_id: src.id, subject: 'math', score: 95, scale: 'percent', recorded_at: '2026-04-14T09:00:00Z' });
-
-    const grades = getAllGrades();
-    expect(grades).toHaveLength(1);
-    expect(grades[0].subject).toBe('math');
-    expect(grades[0].metadata).toEqual({});
-  });
-
-  it('getAllMeals returns meals with parsed items/nutrition/metadata', () => {
-    const src = createDataSource({ name: 'meal-src', type: 'manual' });
-    insertMeal({
+  it('getAllDataRecords returns records with parsed data', () => {
+    const src = createDataSource({ name: 'dr-src', type: 'manual' });
+    insertRecord('health_metric', {
       source_id: src.id,
-      meal_type: 'breakfast',
-      items: ['oatmeal', 'coffee'],
-      nutrition: { calories: 350 },
+      recorded_at: '2026-04-14T10:00:00Z',
+      metric_type: 'weight',
+      value: 80,
+      unit: 'kg',
+      metadata: {},
+    });
+    insertRecord('activity', {
+      source_id: src.id,
       recorded_at: '2026-04-14T07:00:00Z',
+      activity_type: 'running',
+      duration_minutes: 30,
+      intensity: 'moderate',
+      metadata: {},
     });
 
-    const meals = getAllMeals();
-    expect(meals).toHaveLength(1);
-    expect(meals[0].items).toEqual(['oatmeal', 'coffee']);
-    expect(meals[0].nutrition).toEqual({ calories: 350 });
-    expect(meals[0].metadata).toEqual({});
+    const records = getAllDataRecords();
+    expect(records).toHaveLength(2);
+    // Ordered by id ASC
+    expect(records[0].id).toBeLessThan(records[1].id);
+    expect(records[0].record_type).toBe('health_metric');
+    expect(typeof records[0].data).toBe('object');
+    expect(records[0].data.metric_type).toBe('weight');
+    expect(records[1].record_type).toBe('activity');
+    expect(records[1].data.activity_type).toBe('running');
   });
 });
 
@@ -116,13 +93,10 @@ describe('getRecordCounts', () => {
   it('returns zero counts for empty database', () => {
     const counts = getRecordCounts();
     expect(counts).toEqual({
-      activities: 0,
+      data_records: {},
       data_sources: 0,
       embeddings: 0,
       entities: 0,
-      grades: 0,
-      health_metrics: 0,
-      meals: 0,
       relations: 0,
     });
   });
@@ -131,12 +105,19 @@ describe('getRecordCounts', () => {
     createEntity({ name: 'A', type: 'x' });
     createEntity({ name: 'B', type: 'x' });
     const src = createDataSource({ name: 'src1', type: 'manual' });
-    insertHealthMetric({ source_id: src.id, metric_type: 'weight', value: 80, unit: 'kg', recorded_at: '2026-04-14T10:00:00Z' });
+    insertRecord('health_metric', {
+      source_id: src.id,
+      recorded_at: '2026-04-14T10:00:00Z',
+      metric_type: 'weight',
+      value: 80,
+      unit: 'kg',
+      metadata: {},
+    });
 
     const counts = getRecordCounts();
     expect(counts.entities).toBe(2);
     expect(counts.data_sources).toBe(1);
-    expect(counts.health_metrics).toBe(1);
+    expect(counts.data_records).toEqual({ health_metric: 1 });
     expect(counts.relations).toBe(0);
   });
 

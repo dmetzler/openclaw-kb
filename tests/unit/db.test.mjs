@@ -13,6 +13,8 @@ import {
   createDataSource,
   getDataSource,
   updateDataSource,
+  insertRecord,
+  queryRecords,
 } from '../../src/db.mjs';
 
 beforeEach(() => {
@@ -271,5 +273,263 @@ describe('Data Source CRUD', () => {
 
   it('updateDataSource with nonexistent id throws', () => {
     expect(() => updateDataSource(999999, { name: 'ghost-source' })).toThrow();
+  });
+});
+
+describe('insertRecord', () => {
+  it('insertRecord returns record with id, source_id, record_type, data (parsed), recorded_at, created_at', () => {
+    const src = createDataSource({ name: 'test-source', type: 'manual' });
+    const record = insertRecord('health_metric', {
+      source_id: src.id,
+      recorded_at: '2026-04-14T10:00:00Z',
+      metric_type: 'weight',
+      value: 80,
+      unit: 'kg',
+    });
+
+    expect(record).toMatchObject({
+      id: expect.any(Number),
+      source_id: src.id,
+      record_type: 'health_metric',
+      recorded_at: '2026-04-14T10:00:00Z',
+    });
+    expect(record.id).toBeGreaterThan(0);
+    expect(record.data).toEqual(expect.any(Object));
+    expect(record.created_at).toEqual(expect.any(String));
+  });
+
+  it('insertRecord stores full data object as JSON (including source_id, recorded_at in data)', () => {
+    const src = createDataSource({ name: 'test-source-2', type: 'manual' });
+    const record = insertRecord('exercise', {
+      source_id: src.id,
+      recorded_at: '2026-04-14T14:30:00Z',
+      activity: 'running',
+      duration_minutes: 30,
+      distance_km: 5.2,
+    });
+
+    expect(record.data).toEqual({
+      source_id: src.id,
+      recorded_at: '2026-04-14T14:30:00Z',
+      activity: 'running',
+      duration_minutes: 30,
+      distance_km: 5.2,
+    });
+  });
+
+  it('insertRecord throws on empty recordType', () => {
+    const src = createDataSource({ name: 'test-source-3', type: 'manual' });
+    expect(() =>
+      insertRecord('', {
+        source_id: src.id,
+        recorded_at: '2026-04-14T10:00:00Z',
+        value: 100,
+      })
+    ).toThrow();
+  });
+
+  it('insertRecord throws on missing data.source_id', () => {
+    createDataSource({ name: 'test-source-4', type: 'manual' });
+    expect(() =>
+      insertRecord('metric', {
+        recorded_at: '2026-04-14T10:00:00Z',
+        value: 100,
+      })
+    ).toThrow();
+  });
+
+  it('insertRecord throws on nonexistent data.source_id', () => {
+    expect(() =>
+      insertRecord('metric', {
+        source_id: 999999,
+        recorded_at: '2026-04-14T10:00:00Z',
+        value: 100,
+      })
+    ).toThrow();
+  });
+
+  it('insertRecord throws on missing data.recorded_at', () => {
+    const src = createDataSource({ name: 'test-source-5', type: 'manual' });
+    expect(() =>
+      insertRecord('metric', {
+        source_id: src.id,
+        value: 100,
+      })
+    ).toThrow();
+  });
+});
+
+describe('queryRecords', () => {
+  it('queryRecords filters by record_type', () => {
+    const src = createDataSource({ name: 'query-source-1', type: 'manual' });
+    insertRecord('weight', {
+      source_id: src.id,
+      recorded_at: '2026-04-14T10:00:00Z',
+      value: 80,
+    });
+    insertRecord('weight', {
+      source_id: src.id,
+      recorded_at: '2026-04-14T11:00:00Z',
+      value: 81,
+    });
+    insertRecord('heart_rate', {
+      source_id: src.id,
+      recorded_at: '2026-04-14T10:30:00Z',
+      value: 70,
+    });
+
+    const results = queryRecords('weight', { limit: 100 });
+    expect(results).toHaveLength(2);
+    expect(results.every(r => r.record_type === 'weight')).toBe(true);
+  });
+
+  it('queryRecords filters by source_id', () => {
+    const src1 = createDataSource({ name: 'query-source-2', type: 'manual' });
+    const src2 = createDataSource({ name: 'query-source-3', type: 'manual' });
+
+    insertRecord('weight', {
+      source_id: src1.id,
+      recorded_at: '2026-04-14T10:00:00Z',
+      value: 80,
+    });
+    insertRecord('weight', {
+      source_id: src2.id,
+      recorded_at: '2026-04-14T10:00:00Z',
+      value: 75,
+    });
+
+    const results = queryRecords('weight', { source_id: src1.id, limit: 100 });
+    expect(results).toHaveLength(1);
+    expect(results[0].source_id).toBe(src1.id);
+  });
+
+  it('queryRecords filters by time range (from/to)', () => {
+    const src = createDataSource({ name: 'query-source-4', type: 'manual' });
+
+    insertRecord('metric', {
+      source_id: src.id,
+      recorded_at: '2026-04-14T08:00:00Z',
+      value: 1,
+    });
+    insertRecord('metric', {
+      source_id: src.id,
+      recorded_at: '2026-04-14T12:00:00Z',
+      value: 2,
+    });
+    insertRecord('metric', {
+      source_id: src.id,
+      recorded_at: '2026-04-14T16:00:00Z',
+      value: 3,
+    });
+
+    const results = queryRecords('metric', {
+      from: '2026-04-14T10:00:00Z',
+      to: '2026-04-14T15:00:00Z',
+      limit: 100,
+    });
+    expect(results).toHaveLength(1);
+    expect(results[0].data.value).toBe(2);
+  });
+
+  it('queryRecords supports limit and offset', () => {
+    const src = createDataSource({ name: 'query-source-5', type: 'manual' });
+
+    insertRecord('metric', {
+      source_id: src.id,
+      recorded_at: '2026-04-14T10:00:00Z',
+      value: 1,
+    });
+    insertRecord('metric', {
+      source_id: src.id,
+      recorded_at: '2026-04-14T11:00:00Z',
+      value: 2,
+    });
+    insertRecord('metric', {
+      source_id: src.id,
+      recorded_at: '2026-04-14T12:00:00Z',
+      value: 3,
+    });
+    insertRecord('metric', {
+      source_id: src.id,
+      recorded_at: '2026-04-14T13:00:00Z',
+      value: 4,
+    });
+
+    const page1 = queryRecords('metric', { limit: 2, offset: 0 });
+    expect(page1).toHaveLength(2);
+
+    const page2 = queryRecords('metric', { limit: 2, offset: 2 });
+    expect(page2).toHaveLength(2);
+
+    expect(page1[0].id).not.toBe(page2[0].id);
+  });
+
+  it('queryRecords supports jsonFilters', () => {
+    const src = createDataSource({ name: 'query-source-6', type: 'manual' });
+
+    insertRecord('health_metric', {
+      source_id: src.id,
+      recorded_at: '2026-04-14T10:00:00Z',
+      metric_type: 'weight',
+      value: 80,
+    });
+    insertRecord('health_metric', {
+      source_id: src.id,
+      recorded_at: '2026-04-14T11:00:00Z',
+      metric_type: 'heart_rate',
+      value: 70,
+    });
+    insertRecord('health_metric', {
+      source_id: src.id,
+      recorded_at: '2026-04-14T12:00:00Z',
+      metric_type: 'weight',
+      value: 81,
+    });
+
+    const results = queryRecords('health_metric', {
+      jsonFilters: { metric_type: 'weight' },
+      limit: 100,
+    });
+    expect(results).toHaveLength(2);
+    expect(results.every(r => r.data.metric_type === 'weight')).toBe(true);
+  });
+
+  it('queryRecords returns results ordered by recorded_at DESC (not ASC)', () => {
+    const src = createDataSource({ name: 'query-source-7', type: 'manual' });
+
+    insertRecord('metric', {
+      source_id: src.id,
+      recorded_at: '2026-04-14T10:00:00Z',
+      value: 1,
+    });
+    insertRecord('metric', {
+      source_id: src.id,
+      recorded_at: '2026-04-14T11:00:00Z',
+      value: 2,
+    });
+    insertRecord('metric', {
+      source_id: src.id,
+      recorded_at: '2026-04-14T12:00:00Z',
+      value: 3,
+    });
+
+    const results = queryRecords('metric', { limit: 100 });
+    expect(results).toHaveLength(3);
+    expect(results[0].data.value).toBe(3); // Latest first
+    expect(results[1].data.value).toBe(2);
+    expect(results[2].data.value).toBe(1); // Oldest last
+  });
+
+  it('queryRecords returns empty array for nonexistent record_type', () => {
+    const src = createDataSource({ name: 'query-source-8', type: 'manual' });
+
+    insertRecord('real_metric', {
+      source_id: src.id,
+      recorded_at: '2026-04-14T10:00:00Z',
+      value: 100,
+    });
+
+    const results = queryRecords('nonexistent_type', { limit: 100 });
+    expect(results).toEqual([]);
   });
 });

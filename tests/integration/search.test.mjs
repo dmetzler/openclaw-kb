@@ -6,10 +6,7 @@ import {
   updateEntity,
   deleteEntity,
   createDataSource,
-  insertHealthMetric,
-  insertActivity,
-  insertGrade,
-  insertMeal,
+  insertRecord,
   search,
   upsertEmbedding,
   deleteEmbedding,
@@ -192,12 +189,12 @@ describe('Full-Text Search', () => {
   it('filters by source_table', () => {
     createEntity({ name: 'Filtered Search Term', type: 'note' });
     const source = createDataSource({ name: 'search-filter-source', type: 'manual' });
-    insertHealthMetric({
+    insertRecord('health_metric', {
       source_id: source.id,
+      recorded_at: '2026-04-14T10:00:00Z',
       metric_type: 'Filtered Search Metric',
       value: 72,
       unit: 'bpm',
-      recorded_at: '2026-04-14T10:00:00Z',
     });
 
     const results = search('Filtered', { source_table: 'entities' });
@@ -208,12 +205,12 @@ describe('Full-Text Search', () => {
 
   it('searches health metrics', () => {
     const source = createDataSource({ name: 'health-search-source', type: 'manual' });
-    const metric = insertHealthMetric({
+    const record = insertRecord('health_metric', {
       source_id: source.id,
+      recorded_at: '2026-04-14T10:00:00Z',
       metric_type: 'heart_rate',
       value: 60,
       unit: 'bpm',
-      recorded_at: '2026-04-14T10:00:00Z',
     });
 
     const results = search('heart_rate');
@@ -221,9 +218,9 @@ describe('Full-Text Search', () => {
     expect(results).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          source_table: 'health_metrics',
-          source_id: metric.id,
-          name: 'heart_rate',
+          source_table: 'data_records',
+          source_id: record.id,
+          name: 'health_metric',
         }),
       ]),
     );
@@ -231,12 +228,12 @@ describe('Full-Text Search', () => {
 
   it('searches activities', () => {
     const source = createDataSource({ name: 'activity-search-source', type: 'manual' });
-    const activity = insertActivity({
+    const record = insertRecord('activity', {
       source_id: source.id,
+      recorded_at: '2026-04-14T10:00:00Z',
       activity_type: 'morning_run',
       duration_minutes: 30,
       intensity: 'medium',
-      recorded_at: '2026-04-14T10:00:00Z',
     });
 
     const results = search('morning_run');
@@ -244,9 +241,9 @@ describe('Full-Text Search', () => {
     expect(results).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          source_table: 'activities',
-          source_id: activity.id,
-          name: 'morning_run',
+          source_table: 'data_records',
+          source_id: record.id,
+          name: 'activity',
         }),
       ]),
     );
@@ -254,12 +251,12 @@ describe('Full-Text Search', () => {
 
   it('searches grades', () => {
     const source = createDataSource({ name: 'grade-search-source', type: 'manual' });
-    const grade = insertGrade({
+    const record = insertRecord('grade', {
       source_id: source.id,
+      recorded_at: '2026-04-14T10:00:00Z',
       subject: 'Mathematics',
       score: 98,
       scale: 'percent',
-      recorded_at: '2026-04-14T10:00:00Z',
     });
 
     const results = search('Mathematics');
@@ -267,9 +264,9 @@ describe('Full-Text Search', () => {
     expect(results).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          source_table: 'grades',
-          source_id: grade.id,
-          name: 'Mathematics',
+          source_table: 'data_records',
+          source_id: record.id,
+          name: 'grade',
         }),
       ]),
     );
@@ -277,11 +274,11 @@ describe('Full-Text Search', () => {
 
   it('searches meals', () => {
     const source = createDataSource({ name: 'meal-search-source', type: 'manual' });
-    const meal = insertMeal({
+    const record = insertRecord('meal', {
       source_id: source.id,
+      recorded_at: '2026-04-14T10:00:00Z',
       meal_type: 'breakfast',
       items: ['oats', 'berries'],
-      recorded_at: '2026-04-14T10:00:00Z',
     });
 
     const results = search('breakfast');
@@ -289,9 +286,9 @@ describe('Full-Text Search', () => {
     expect(results).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          source_table: 'meals',
-          source_id: meal.id,
-          name: 'breakfast',
+          source_table: 'data_records',
+          source_id: record.id,
+          name: 'meal',
         }),
       ]),
     );

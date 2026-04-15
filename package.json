@@ -4,7 +4,9 @@
   "description": "SQLite database abstraction layer for OpenClaw knowledge base",
   "main": "src/db.mjs",
   "scripts": {
-    "test": "vitest run"
+    "test": "vitest run",
+    "docs:serve": "mkdocs serve",
+    "docs:build": "mkdocs build --strict"
   },
   "keywords": [],
   "author": "",

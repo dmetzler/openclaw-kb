@@ -6,6 +6,16 @@ Auto-generated from all feature plans. Last updated: 2026-04-14
 - JavaScript (ES Modules), Node.js 18+ + `better-sqlite3` (SQLite driver), `sqlite-vec` (vec0 vector extension) (001-sqlite-db-layer)
 - SQLite (single file: `jarvis.db`), WAL mode, foreign keys enforced (001-sqlite-db-layer)
 - SQLite (`jarvis.db` via `db.mjs`), Markdown files on disk (`wiki/`, `raw/`) (002-wiki-ingestion-pipeline)
+- JavaScript (ES Modules), Node.js 18+ + `better-sqlite3` (via `db.mjs`), `sqlite-vec` (via `db.mjs`), Node.js built-ins (`fs`, `path`, `readline`) (003-kb-export-import)
+- SQLite (`jarvis.db` via `db.mjs`), flat files on disk (JSONL, CSV, JSON) (003-kb-export-import)
+- JavaScript (ES Modules), Node.js 18+ + `better-sqlite3` (SQLite driver), `sqlite-vec` (vector extension), `vitest` (test runner) (004-generic-data-records)
+- JavaScript (ES Modules), Node.js 18+ + `better-sqlite3` (via `db.mjs`), `sqlite-vec` (vec0 extension, via `db.mjs`), existing `db.mjs` abstraction layer (35 exported functions) (005-hybrid-search)
+- SQLite (`jarvis.db`), WAL mode, foreign keys enforced. FTS5 virtual table (`search_index`) with prefix='2 3'. vec0 virtual table (`vec_embeddings`) with 384-dim cosine distance. (005-hybrid-search)
+- JavaScript (ES Modules), Node.js 18+ + `better-sqlite3` (SQLite driver, via `db.mjs`), `sqlite-vec` (vec0 vector extension, via `db.mjs`), `vitest` 4.1.4 (test runner) (005-hybrid-search)
+- JavaScript (ES Modules, `.mjs`), Node.js 18+ + `better-sqlite3` (via `db.mjs`), `sqlite-vec` (via `db.mjs`), Node.js built-ins (`fs`, `path`, `url`, `process`) (006-kg-migration)
+- SQLite (`jarvis.db`), WAL mode, foreign keys enforced; input is a JSON file (`kg-store.json`) (006-kg-migration)
+- Markdown (documentation content), Python 3.x (MkDocs toolchain), YAML (MkDocs config) + `mkdocs` (static site generator), `mkdocs-material` (Material theme), `pymdown-extensions` (Markdown extensions for admonitions, code blocks, Mermaid) (008-mkdocs-documentation)
+- N/A — static Markdown files in `docs/` rendered to HTML (008-mkdocs-documentation)
 
 - (001-sqlite-db-layer)
 
@@ -25,10 +35,10 @@ tests/
 : Follow standard conventions
 
 ## Recent Changes
-- 002-wiki-ingestion-pipeline: Added JavaScript (ES Modules), Node.js 18+
-- 001-sqlite-db-layer: Added JavaScript (ES Modules), Node.js 18+ + `better-sqlite3` (SQLite driver), `sqlite-vec` (vec0 vector extension)
+- 008-mkdocs-documentation: Added Markdown (documentation content), Python 3.x (MkDocs toolchain), YAML (MkDocs config) + `mkdocs` (static site generator), `mkdocs-material` (Material theme), `pymdown-extensions` (Markdown extensions for admonitions, code blocks, Mermaid)
+- 006-kg-migration: Added JavaScript (ES Modules, `.mjs`), Node.js 18+ + `better-sqlite3` (via `db.mjs`), `sqlite-vec` (via `db.mjs`), Node.js built-ins (`fs`, `path`, `url`, `process`)
+- 005-hybrid-search: Added JavaScript (ES Modules), Node.js 18+ + `better-sqlite3` (SQLite driver, via `db.mjs`), `sqlite-vec` (vec0 vector extension, via `db.mjs`), `vitest` 4.1.4 (test runner)
 
-- 001-sqlite-db-layer: Added
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->

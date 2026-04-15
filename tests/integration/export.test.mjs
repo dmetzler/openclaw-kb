@@ -8,10 +8,7 @@ import {
   createEntity,
   createRelation,
   createDataSource,
-  insertHealthMetric,
-  insertActivity,
-  insertGrade,
-  insertMeal,
+  insertRecord,
   upsertEmbedding,
   EMBEDDING_DIMENSIONS,
 } from '../../src/db.mjs';
@@ -32,45 +29,30 @@ afterEach(() => {
   rmSync(tmpDir, { recursive: true, force: true });
 });
 
-/**
- * Seeds the database with known test data across all tables.
- * Returns the seed data for assertions.
- */
 function seedDatabase() {
-  // Data sources
   const ds1 = createDataSource({ name: 'fitbit-api', type: 'api', config: { api_key: 'abc123', endpoint: 'https://api.fitbit.com' } });
   const ds2 = createDataSource({ name: 'manual-entry', type: 'manual', config: {} });
 
-  // Entities
   const e1 = createEntity({ name: 'John Doe', type: 'person', metadata: { age: 30, tags: ['engineer', 'parent'] } });
   const e2 = createEntity({ name: 'Acme Corp', type: 'organization', metadata: { industry: 'tech' } });
 
-  // Relations
   const r1 = createRelation({ source_id: e1.id, target_id: e2.id, type: 'works_at', metadata: { since: '2020' } });
 
-  // Health metrics
-  const hm1 = insertHealthMetric({ source_id: ds1.id, metric_type: 'heart_rate', value: 72, unit: 'bpm', recorded_at: '2026-04-10T08:00:00', metadata: { resting: true } });
-  const hm2 = insertHealthMetric({ source_id: ds1.id, metric_type: 'weight', value: 75.5, unit: 'kg', recorded_at: '2026-04-10T08:00:00' });
+  insertRecord('health_metric', { source_id: ds1.id, metric_type: 'heart_rate', value: 72, unit: 'bpm', recorded_at: '2026-04-10T08:00:00', metadata: { resting: true } });
+  insertRecord('health_metric', { source_id: ds1.id, metric_type: 'weight', value: 75.5, unit: 'kg', recorded_at: '2026-04-10T08:00:00', metadata: {} });
+  insertRecord('activity', { source_id: ds1.id, activity_type: 'running', duration_minutes: 30, intensity: 'moderate', recorded_at: '2026-04-10T07:00:00', metadata: {} });
+  insertRecord('grade', { source_id: ds2.id, subject: 'Mathematics', score: 95, scale: 'percentage', recorded_at: '2026-04-10T09:00:00', metadata: {} });
+  insertRecord('meal', { source_id: ds1.id, meal_type: 'breakfast', items: ['oatmeal', 'coffee'], nutrition: { calories: 350 }, recorded_at: '2026-04-10T07:00:00', metadata: {} });
 
-  // Activities
-  const act1 = insertActivity({ source_id: ds1.id, activity_type: 'running', duration_minutes: 30, intensity: 'moderate', recorded_at: '2026-04-10T07:00:00' });
-
-  // Grades
-  const gr1 = insertGrade({ source_id: ds2.id, subject: 'Mathematics', score: 95, scale: 'percentage', recorded_at: '2026-04-10T09:00:00' });
-
-  // Meals
-  const ml1 = insertMeal({ source_id: ds1.id, meal_type: 'breakfast', items: ['oatmeal', 'coffee'], nutrition: { calories: 350 }, recorded_at: '2026-04-10T07:00:00' });
-
-  // Embeddings
   const vec = new Float32Array(EMBEDDING_DIMENSIONS);
   for (let i = 0; i < EMBEDDING_DIMENSIONS; i++) vec[i] = (i - 192) / 100;
   upsertEmbedding(e1.id, vec);
 
-  return { ds1, ds2, e1, e2, r1, hm1, hm2, act1, gr1, ml1, vec };
+  return { ds1, ds2, e1, e2, r1, vec };
 }
 
 describe('Full export integration', () => {
-  it('creates all 9 expected files', () => {
+  it('creates all 6 expected files', () => {
     seedDatabase();
     exportDatabase(tmpDir);
 
@@ -79,10 +61,7 @@ describe('Full export integration', () => {
       'data_sources.jsonl',
       'entities.jsonl',
       'relations.jsonl',
-      'health_metrics.csv',
-      'activities.csv',
-      'grades.csv',
-      'meals.csv',
+      'data_records.jsonl',
       'embeddings.jsonl',
     ];
 
@@ -136,44 +115,28 @@ describe('Full export integration', () => {
     expect(ds1.config.api_key).toBe('abc123');
   });
 
-  it('health_metrics.csv has header and correct rows', () => {
+  it('data_records.jsonl has correct JSONL lines with all record types', () => {
     seedDatabase();
     exportDatabase(tmpDir);
 
-    const csv = readFileSync(join(tmpDir, 'health_metrics.csv'), 'utf8');
-    const lines = csv.split('\r\n').filter((l) => l.length > 0);
-    expect(lines[0]).toBe('id,source_id,metric_type,value,unit,metadata,recorded_at,created_at');
-    expect(lines.length).toBe(3); // header + 2 rows
-  });
+    const lines = readFileSync(join(tmpDir, 'data_records.jsonl'), 'utf8').trim().split('\n');
+    expect(lines).toHaveLength(5); // 2 health_metric + 1 activity + 1 grade + 1 meal
 
-  it('activities.csv has header and correct rows', () => {
-    seedDatabase();
-    exportDatabase(tmpDir);
+    const records = lines.map((l) => JSON.parse(l));
+    const types = records.map((r) => r.record_type);
+    expect(types.filter((t) => t === 'health_metric')).toHaveLength(2);
+    expect(types.filter((t) => t === 'activity')).toHaveLength(1);
+    expect(types.filter((t) => t === 'grade')).toHaveLength(1);
+    expect(types.filter((t) => t === 'meal')).toHaveLength(1);
 
-    const csv = readFileSync(join(tmpDir, 'activities.csv'), 'utf8');
-    const lines = csv.split('\r\n').filter((l) => l.length > 0);
-    expect(lines[0]).toBe('id,source_id,activity_type,duration_minutes,intensity,metadata,recorded_at,created_at');
-    expect(lines.length).toBe(2); // header + 1 row
-  });
-
-  it('grades.csv has header and correct rows', () => {
-    seedDatabase();
-    exportDatabase(tmpDir);
-
-    const csv = readFileSync(join(tmpDir, 'grades.csv'), 'utf8');
-    const lines = csv.split('\r\n').filter((l) => l.length > 0);
-    expect(lines[0]).toBe('id,source_id,subject,score,scale,metadata,recorded_at,created_at');
-    expect(lines.length).toBe(2); // header + 1 row
-  });
-
-  it('meals.csv has header and correct rows', () => {
-    seedDatabase();
-    exportDatabase(tmpDir);
-
-    const csv = readFileSync(join(tmpDir, 'meals.csv'), 'utf8');
-    const lines = csv.split('\r\n').filter((l) => l.length > 0);
-    expect(lines[0]).toBe('id,source_id,meal_type,items,nutrition,metadata,recorded_at,created_at');
-    expect(lines.length).toBe(2); // header + 1 row
+    // Verify data is a parsed object (not a string)
+    for (const record of records) {
+      expect(typeof record.data).toBe('object');
+      expect(record).toHaveProperty('id');
+      expect(record).toHaveProperty('source_id');
+      expect(record).toHaveProperty('record_type');
+      expect(record).toHaveProperty('recorded_at');
+    }
   });
 
   it('embeddings.jsonl has correct float data', () => {
@@ -204,17 +167,17 @@ describe('Full export integration', () => {
     expect(metadata.record_counts.entities).toBe(2);
     expect(metadata.record_counts.relations).toBe(1);
     expect(metadata.record_counts.data_sources).toBe(2);
-    expect(metadata.record_counts.health_metrics).toBe(2);
-    expect(metadata.record_counts.activities).toBe(1);
-    expect(metadata.record_counts.grades).toBe(1);
-    expect(metadata.record_counts.meals).toBe(1);
+    expect(metadata.record_counts.data_records).toEqual({
+      health_metric: 2,
+      activity: 1,
+      grade: 1,
+      meal: 1,
+    });
     expect(metadata.record_counts.embeddings).toBe(1);
 
-    // Keys in fixed order
     const keys = Object.keys(metadata);
     expect(keys).toEqual(['schema_version', 'exported_at', 'record_counts']);
 
-    // record_counts keys in alphabetical order
     const countKeys = Object.keys(metadata.record_counts);
     expect(countKeys).toEqual([...countKeys].sort());
   });
@@ -229,23 +192,20 @@ describe('Full export integration', () => {
   });
 
   it('empty table export produces correct empty files', () => {
-    // No data seeded — all tables empty
     exportDatabase(tmpDir);
 
     // JSONL files should be empty
     expect(readFileSync(join(tmpDir, 'entities.jsonl'), 'utf8')).toBe('');
     expect(readFileSync(join(tmpDir, 'relations.jsonl'), 'utf8')).toBe('');
     expect(readFileSync(join(tmpDir, 'data_sources.jsonl'), 'utf8')).toBe('');
+    expect(readFileSync(join(tmpDir, 'data_records.jsonl'), 'utf8')).toBe('');
     expect(readFileSync(join(tmpDir, 'embeddings.jsonl'), 'utf8')).toBe('');
 
-    // CSV files should have header only
-    const hmCsv = readFileSync(join(tmpDir, 'health_metrics.csv'), 'utf8');
-    expect(hmCsv).toBe('id,source_id,metric_type,value,unit,metadata,recorded_at,created_at\r\n');
-
-    // metadata.json should have zero counts
     const metadata = JSON.parse(readFileSync(join(tmpDir, 'metadata.json'), 'utf8'));
-    for (const count of Object.values(metadata.record_counts)) {
-      expect(count).toBe(0);
-    }
+    expect(metadata.record_counts.data_records).toEqual({});
+    expect(metadata.record_counts.entities).toBe(0);
+    expect(metadata.record_counts.relations).toBe(0);
+    expect(metadata.record_counts.data_sources).toBe(0);
+    expect(metadata.record_counts.embeddings).toBe(0);
   });
 });

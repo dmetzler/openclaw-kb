@@ -1,0 +1,96 @@
+site_name: OpenClaw Knowledge Base
+site_url: https://dmetzler.github.io/openclaw-kb/
+site_description: A SQLite-based knowledge base for AI agents — ingest, search, and manage structured knowledge.
+repo_name: dmetzler/openclaw-kb
+repo_url: https://github.com/dmetzler/openclaw-kb
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.indexes
+    - navigation.instant
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  font:
+    text: Roboto
+    code: Roboto Mono
+  icon:
+    repo: fontawesome/brands/github
+
+plugins:
+  - search
+  - minify:
+      minify_html: true
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - User Guide:
+    - user-guide/index.md
+    - Installation: user-guide/installation.md
+    - Article Ingestion: user-guide/ingestion.md
+    - Search: user-guide/search.md
+    - Wiki Management: user-guide/wiki.md
+    - Export & Import: user-guide/export-import.md
+    - Google Drive Sync: user-guide/gdrive-sync.md
+  - Developer Guide:
+    - developer-guide/index.md
+    - Architecture: developer-guide/architecture.md
+    - Ingestion Pipeline: developer-guide/ingestion-pipeline.md
+    - Search Internals: developer-guide/search-internals.md
+    - Wiki Structure: developer-guide/wiki-structure.md
+    - Data Lake: developer-guide/data-lake.md
+    - KG Migration: developer-guide/kg-migration.md
+    - Writing Migrations: developer-guide/writing-migrations.md
+  - API Reference:
+    - api-reference/index.md
+    - db.mjs: api-reference/db.md
+    - wiki-search.mjs: api-reference/wiki-search.md
+    - wiki.mjs: api-reference/wiki.md
+    - ingest.mjs: api-reference/ingest.md
+    - extractor.mjs: api-reference/extractor.md
+    - fetcher.mjs: api-reference/fetcher.md
+    - kb-export.mjs: api-reference/kb-export.md
+    - kb-import.mjs: api-reference/kb-import.md
+    - kg-migrate.mjs: api-reference/kg-migrate.md
+    - csv.mjs: api-reference/csv.md
+  - Contributing:
+    - contributing/index.md

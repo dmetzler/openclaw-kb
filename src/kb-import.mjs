@@ -10,14 +10,13 @@
  *   3 — missing export files
  *   4 — target database already exists
  *   5 — schema version incompatible
- *   6 — data validation error (malformed JSONL/CSV)
+ *   6 — data validation error (malformed JSONL)
  *
  * @module kb-import
  */
 
 import { readFileSync, existsSync, unlinkSync } from 'node:fs';
 import { join } from 'node:path';
-import { csvParse } from './csv.mjs';
 import {
   initDatabase,
   closeDatabase,
@@ -25,10 +24,7 @@ import {
   importEntity,
   importRelation,
   importDataSource,
-  importHealthMetric,
-  importActivity,
-  importGrade,
-  importMeal,
+  importDataRecord,
   upsertEmbedding,
   runTransaction,
 } from './db.mjs';
@@ -38,10 +34,7 @@ const REQUIRED_FILES = [
   'data_sources.jsonl',
   'entities.jsonl',
   'relations.jsonl',
-  'health_metrics.csv',
-  'activities.csv',
-  'grades.csv',
-  'meals.csv',
+  'data_records.jsonl',
   'embeddings.jsonl',
 ];
 
@@ -64,51 +57,6 @@ function readJsonl(filePath, fileName) {
     } catch (err) {
       throw new Error(`Malformed JSON at ${fileName}:${idx + 1}: ${err.message}`);
     }
-  });
-}
-
-/**
- * Reads a CSV file and returns an array of row objects (keyed by headers).
- *
- * @param {string} filePath - Path to the CSV file.
- * @param {string} fileName - File name for error messages.
- * @param {string[]} jsonFields - Column names that contain JSON and need parsing.
- * @param {string[]} textFields - Column names that must stay as strings (no numeric coercion).
- * @returns {Object[]}
- */
-function readCsvRows(filePath, fileName, jsonFields = [], textFields = []) {
-  const content = readFileSync(filePath, 'utf8');
-  const { headers, rows } = csvParse(content);
-
-  return rows.map((row, idx) => {
-    if (row.length !== headers.length) {
-      throw new Error(`Invalid CSV at ${fileName}:${idx + 2}: expected ${headers.length} columns, got ${row.length}`);
-    }
-
-    const obj = {};
-    for (let i = 0; i < headers.length; i++) {
-      const key = headers[i];
-      let val = row[i];
-
-      if (jsonFields.includes(key) && val !== '') {
-        try {
-          val = JSON.parse(val);
-        } catch (err) {
-          throw new Error(`Invalid CSV at ${fileName}:${idx + 2}: failed to parse JSON field '${key}': ${err.message}`);
-        }
-      } else if (val === '') {
-        val = null;
-      } else if (textFields.includes(key)) {
-        // Preserve as string — TEXT column in schema
-      } else if (!isNaN(val) && val.trim() !== '') {
-        // Coerce numeric strings to numbers
-        val = Number(val);
-      }
-
-      obj[key] = val;
-    }
-
-    return obj;
   });
 }
 
@@ -197,25 +145,10 @@ export function importDatabase(exportDir, dbPath, options = {}) {
       for (const row of relations) importRelation(row);
       log(`  relations: ${relations.length} records imported`);
 
-      // Import health_metrics (CSV)
-      const healthMetrics = readCsvRows(join(exportDir, 'health_metrics.csv'), 'health_metrics.csv', ['metadata'], ['metric_type', 'unit', 'recorded_at', 'created_at']);
-      for (const row of healthMetrics) importHealthMetric(row);
-      log(`  health_metrics: ${healthMetrics.length} records imported`);
-
-      // Import activities (CSV)
-      const activities = readCsvRows(join(exportDir, 'activities.csv'), 'activities.csv', ['metadata'], ['activity_type', 'intensity', 'recorded_at', 'created_at']);
-      for (const row of activities) importActivity(row);
-      log(`  activities: ${activities.length} records imported`);
-
-      // Import grades (CSV)
-      const grades = readCsvRows(join(exportDir, 'grades.csv'), 'grades.csv', ['metadata'], ['subject', 'scale', 'recorded_at', 'created_at']);
-      for (const row of grades) importGrade(row);
-      log(`  grades: ${grades.length} records imported`);
-
-      // Import meals (CSV)
-      const meals = readCsvRows(join(exportDir, 'meals.csv'), 'meals.csv', ['items', 'nutrition', 'metadata'], ['meal_type', 'recorded_at', 'created_at']);
-      for (const row of meals) importMeal(row);
-      log(`  meals: ${meals.length} records imported`);
+      // Import data_records (JSONL)
+      const dataRecords = readJsonl(join(exportDir, 'data_records.jsonl'), 'data_records.jsonl');
+      for (const row of dataRecords) importDataRecord(row);
+      log(`  data_records: ${dataRecords.length} records imported`);
 
       // Import embeddings (JSONL)
       const embeddings = readJsonl(join(exportDir, 'embeddings.jsonl'), 'embeddings.jsonl');
@@ -265,7 +198,7 @@ if (isMainModule) {
     if (msg.includes('Missing required files')) process.exit(3);
     if (msg.includes('already exists')) process.exit(4);
     if (msg.includes('version')) process.exit(5);
-    if (msg.includes('Malformed') || msg.includes('Invalid CSV')) process.exit(6);
+    if (msg.includes('Malformed')) process.exit(6);
     process.stderr.write(`Error: ${msg}\n`);
     process.exit(1);
   }

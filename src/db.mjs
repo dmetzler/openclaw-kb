@@ -92,8 +92,16 @@ function _runMigrations() {
     }
 
     const sql = readFileSync(join(migrationsDir, file), 'utf8');
+    const hasLegacyTables = database
+      .prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='health_metrics'")
+      .get();
     const migrate = database.transaction(() => {
-      database.exec(sql);
+      if (hasLegacyTables) {
+        database.exec(sql);
+      } else {
+        const safeSql = sql.replace(/^INSERT INTO data_records[\s\S]*?;\s*$/gm, '');
+        database.exec(safeSql);
+      }
       database
         .prepare('INSERT INTO schema_migrations (version, name) VALUES (?, ?)')
         .run(version, file);
@@ -560,82 +568,44 @@ export function updateDataSource(id, updates) {
   return getDataSource(id);
 }
 
-/**
- * Inserts a health metric record.
- *
- * @param {Object} record
- * @param {number} record.source_id - Data source ID.
- * @param {string} record.metric_type - Measurement type.
- * @param {number} record.value - Numeric measurement.
- * @param {string} record.unit - Unit of measurement.
- * @param {Object} [record.metadata={}] - Additional context.
- * @param {string} record.recorded_at - ISO 8601 timestamp.
- * @returns {{ id: number, source_id: number, metric_type: string, value: number, unit: string, metadata: Object, recorded_at: string, created_at: string }}
- * @throws {Error} If required fields are missing or invalid.
- */
-export function insertHealthMetric({
-  source_id,
-  metric_type,
-  value,
-  unit,
-  metadata = {},
-  recorded_at,
-}) {
-  if (source_id === undefined || source_id === null) {
-    throw new Error('Health metric source_id is required');
+export function insertRecord(recordType, data) {
+  if (!recordType || typeof recordType !== 'string' || recordType.trim().length === 0) {
+    throw new Error('record_type is required and must be a non-empty string');
   }
 
-  if (!metric_type || typeof metric_type !== 'string' || metric_type.trim().length === 0) {
-    throw new Error('Health metric metric_type must be a non-empty string');
+  if (!data || typeof data !== 'object') {
+    throw new Error('data is required and must be an object');
   }
 
-  if (typeof value !== 'number' || Number.isNaN(value)) {
-    throw new Error('Health metric value must be a number');
+  const sourceId = data.source_id;
+  if (sourceId === undefined || sourceId === null) {
+    throw new Error('data.source_id is required');
   }
 
-  if (!unit || typeof unit !== 'string' || unit.trim().length === 0) {
-    throw new Error('Health metric unit must be a non-empty string');
+  if (!getDataSource(sourceId)) {
+    throw new Error(`Data source with id ${sourceId} not found`);
   }
 
-  if (!recorded_at || typeof recorded_at !== 'string' || recorded_at.trim().length === 0) {
-    throw new Error('Health metric recorded_at must be a non-empty string');
+  if (!data.recorded_at || typeof data.recorded_at !== 'string' || data.recorded_at.trim().length === 0) {
+    throw new Error('recorded_at is required');
   }
 
   const result = _getDb()
-    .prepare(`INSERT INTO health_metrics
-      (source_id, metric_type, value, unit, metadata, recorded_at)
-      VALUES (?, ?, ?, ?, ?, ?)`)
-    .run(source_id, metric_type, value, unit, JSON.stringify(metadata), recorded_at);
+    .prepare('INSERT INTO data_records (source_id, record_type, data, recorded_at) VALUES (?, ?, ?, ?)')
+    .run(sourceId, recordType, JSON.stringify(data), data.recorded_at);
 
-  const row = _getDb().prepare('SELECT * FROM health_metrics WHERE id = ?').get(result.lastInsertRowid);
+  const row = _getDb().prepare('SELECT * FROM data_records WHERE id = ?').get(result.lastInsertRowid);
 
-  return _parseJsonFields(row, 'metadata');
+  return { ...row, data: JSON.parse(row.data) };
 }
 
-/**
- * Queries health metrics with optional filters.
- *
- * @param {Object} [filters={}]
- * @param {number} [filters.source_id] - Filter by data source.
- * @param {string} [filters.metric_type] - Filter by metric type.
- * @param {string} [filters.from] - Start of time range (inclusive).
- * @param {string} [filters.to] - End of time range (inclusive).
- * @param {number} [filters.limit=100] - Max results.
- * @param {number} [filters.offset=0] - Pagination offset.
- * @returns {Object[]} Records ordered by recorded_at ASC.
- */
-export function queryHealthMetrics(filters = {}) {
-  let sql = 'SELECT * FROM health_metrics WHERE 1=1';
-  const params = [];
+export function queryRecords(recordType, filters = {}) {
+  let sql = 'SELECT * FROM data_records WHERE record_type = ?';
+  const params = [recordType];
 
   if (filters.source_id !== undefined) {
     sql += ' AND source_id = ?';
     params.push(filters.source_id);
-  }
-
-  if (filters.metric_type !== undefined) {
-    sql += ' AND metric_type = ?';
-    params.push(filters.metric_type);
   }
 
   if (filters.from !== undefined) {
@@ -648,306 +618,21 @@ export function queryHealthMetrics(filters = {}) {
     params.push(filters.to);
   }
 
-  sql += ' ORDER BY recorded_at ASC';
+  if (filters.jsonFilters) {
+    for (const [key, value] of Object.entries(filters.jsonFilters)) {
+      sql += ` AND json_extract(data, '$.${key}') = ?`;
+      params.push(value);
+    }
+  }
+
+  sql += ' ORDER BY recorded_at DESC';
   sql += ' LIMIT ? OFFSET ?';
   params.push(filters.limit ?? 100, filters.offset ?? 0);
 
   return _getDb()
     .prepare(sql)
     .all(...params)
-    .map((row) => _parseJsonFields(row, 'metadata'));
-}
-
-/**
- * Inserts an activity record.
- *
- * @param {Object} record
- * @param {number} record.source_id - Data source ID.
- * @param {string} record.activity_type - Activity type.
- * @param {number} record.duration_minutes - Duration in minutes.
- * @param {string} record.intensity - Intensity level.
- * @param {Object} [record.metadata={}] - Additional context.
- * @param {string} record.recorded_at - ISO 8601 timestamp.
- * @returns {{ id: number, source_id: number, activity_type: string, duration_minutes: number, intensity: string, metadata: Object, recorded_at: string, created_at: string }}
- * @throws {Error} If required fields are missing or invalid.
- */
-export function insertActivity({
-  source_id,
-  activity_type,
-  duration_minutes,
-  intensity,
-  metadata = {},
-  recorded_at,
-}) {
-  if (source_id === undefined || source_id === null) {
-    throw new Error('Activity source_id is required');
-  }
-
-  if (!activity_type || typeof activity_type !== 'string' || activity_type.trim().length === 0) {
-    throw new Error('Activity activity_type must be a non-empty string');
-  }
-
-  if (!recorded_at || typeof recorded_at !== 'string' || recorded_at.trim().length === 0) {
-    throw new Error('Activity recorded_at must be a non-empty string');
-  }
-
-  const result = _getDb()
-    .prepare(`INSERT INTO activities
-      (source_id, activity_type, duration_minutes, intensity, metadata, recorded_at)
-      VALUES (?, ?, ?, ?, ?, ?)`)
-    .run(
-      source_id,
-      activity_type,
-      duration_minutes,
-      intensity,
-      JSON.stringify(metadata),
-      recorded_at,
-    );
-
-  const row = _getDb().prepare('SELECT * FROM activities WHERE id = ?').get(result.lastInsertRowid);
-
-  return _parseJsonFields(row, 'metadata');
-}
-
-/**
- * Queries activities with optional filters.
- *
- * @param {Object} [filters={}]
- * @param {number} [filters.source_id] - Filter by data source.
- * @param {string} [filters.activity_type] - Filter by activity type.
- * @param {string} [filters.from] - Start of time range (inclusive).
- * @param {string} [filters.to] - End of time range (inclusive).
- * @param {number} [filters.limit=100] - Max results.
- * @param {number} [filters.offset=0] - Pagination offset.
- * @returns {Object[]} Records ordered by recorded_at ASC.
- */
-export function queryActivities(filters = {}) {
-  let sql = 'SELECT * FROM activities WHERE 1=1';
-  const params = [];
-
-  if (filters.source_id !== undefined) {
-    sql += ' AND source_id = ?';
-    params.push(filters.source_id);
-  }
-
-  if (filters.activity_type !== undefined) {
-    sql += ' AND activity_type = ?';
-    params.push(filters.activity_type);
-  }
-
-  if (filters.from !== undefined) {
-    sql += ' AND recorded_at >= ?';
-    params.push(filters.from);
-  }
-
-  if (filters.to !== undefined) {
-    sql += ' AND recorded_at <= ?';
-    params.push(filters.to);
-  }
-
-  sql += ' ORDER BY recorded_at ASC';
-  sql += ' LIMIT ? OFFSET ?';
-  params.push(filters.limit ?? 100, filters.offset ?? 0);
-
-  return _getDb()
-    .prepare(sql)
-    .all(...params)
-    .map((row) => _parseJsonFields(row, 'metadata'));
-}
-
-/**
- * Inserts a grade record.
- *
- * @param {Object} record
- * @param {number} record.source_id - Data source ID.
- * @param {string} record.subject - Subject name.
- * @param {number} record.score - Numeric score.
- * @param {string} record.scale - Grading scale.
- * @param {Object} [record.metadata={}] - Additional context.
- * @param {string} record.recorded_at - ISO 8601 timestamp.
- * @returns {{ id: number, source_id: number, subject: string, score: number, scale: string, metadata: Object, recorded_at: string, created_at: string }}
- * @throws {Error} If required fields are missing or invalid.
- */
-export function insertGrade({
-  source_id,
-  subject,
-  score,
-  scale,
-  metadata = {},
-  recorded_at,
-}) {
-  if (source_id === undefined || source_id === null) {
-    throw new Error('Grade source_id is required');
-  }
-
-  if (!subject || typeof subject !== 'string' || subject.trim().length === 0) {
-    throw new Error('Grade subject must be a non-empty string');
-  }
-
-  if (typeof score !== 'number' || Number.isNaN(score)) {
-    throw new Error('Grade score must be a number');
-  }
-
-  if (!recorded_at || typeof recorded_at !== 'string' || recorded_at.trim().length === 0) {
-    throw new Error('Grade recorded_at must be a non-empty string');
-  }
-
-  const result = _getDb()
-    .prepare(`INSERT INTO grades
-      (source_id, subject, score, scale, metadata, recorded_at)
-      VALUES (?, ?, ?, ?, ?, ?)`)
-    .run(source_id, subject, score, scale, JSON.stringify(metadata), recorded_at);
-
-  const row = _getDb().prepare('SELECT * FROM grades WHERE id = ?').get(result.lastInsertRowid);
-
-  return _parseJsonFields(row, 'metadata');
-}
-
-/**
- * Queries grades with optional filters.
- *
- * @param {Object} [filters={}]
- * @param {number} [filters.source_id] - Filter by data source.
- * @param {string} [filters.subject] - Filter by subject.
- * @param {string} [filters.from] - Start of time range (inclusive).
- * @param {string} [filters.to] - End of time range (inclusive).
- * @param {number} [filters.limit=100] - Max results.
- * @param {number} [filters.offset=0] - Pagination offset.
- * @returns {Object[]} Records ordered by recorded_at ASC.
- */
-export function queryGrades(filters = {}) {
-  let sql = 'SELECT * FROM grades WHERE 1=1';
-  const params = [];
-
-  if (filters.source_id !== undefined) {
-    sql += ' AND source_id = ?';
-    params.push(filters.source_id);
-  }
-
-  if (filters.subject !== undefined) {
-    sql += ' AND subject = ?';
-    params.push(filters.subject);
-  }
-
-  if (filters.from !== undefined) {
-    sql += ' AND recorded_at >= ?';
-    params.push(filters.from);
-  }
-
-  if (filters.to !== undefined) {
-    sql += ' AND recorded_at <= ?';
-    params.push(filters.to);
-  }
-
-  sql += ' ORDER BY recorded_at ASC';
-  sql += ' LIMIT ? OFFSET ?';
-  params.push(filters.limit ?? 100, filters.offset ?? 0);
-
-  return _getDb()
-    .prepare(sql)
-    .all(...params)
-    .map((row) => _parseJsonFields(row, 'metadata'));
-}
-
-/**
- * Inserts a meal record.
- *
- * @param {Object} record
- * @param {number} record.source_id - Data source ID.
- * @param {string} record.meal_type - Meal type.
- * @param {Array} record.items - Meal items.
- * @param {Object} [record.nutrition={}] - Nutritional info.
- * @param {Object} [record.metadata={}] - Additional context.
- * @param {string} record.recorded_at - ISO 8601 timestamp.
- * @returns {{ id: number, source_id: number, meal_type: string, items: Array, nutrition: Object, metadata: Object, recorded_at: string, created_at: string }}
- * @throws {Error} If required fields are missing or invalid.
- */
-export function insertMeal({
-  source_id,
-  meal_type,
-  items,
-  nutrition = {},
-  metadata = {},
-  recorded_at,
-}) {
-  if (source_id === undefined || source_id === null) {
-    throw new Error('Meal source_id is required');
-  }
-
-  if (!meal_type || typeof meal_type !== 'string' || meal_type.trim().length === 0) {
-    throw new Error('Meal meal_type must be a non-empty string');
-  }
-
-  if (!Array.isArray(items)) {
-    throw new Error('Meal items must be an array');
-  }
-
-  if (!recorded_at || typeof recorded_at !== 'string' || recorded_at.trim().length === 0) {
-    throw new Error('Meal recorded_at must be a non-empty string');
-  }
-
-  const result = _getDb()
-    .prepare(`INSERT INTO meals
-      (source_id, meal_type, items, nutrition, metadata, recorded_at)
-      VALUES (?, ?, ?, ?, ?, ?)`)
-    .run(
-      source_id,
-      meal_type,
-      JSON.stringify(items),
-      JSON.stringify(nutrition),
-      JSON.stringify(metadata),
-      recorded_at,
-    );
-
-  const row = _getDb().prepare('SELECT * FROM meals WHERE id = ?').get(result.lastInsertRowid);
-
-  return _parseJsonFields(row, 'items', 'nutrition', 'metadata');
-}
-
-/**
- * Queries meals with optional filters.
- *
- * @param {Object} [filters={}]
- * @param {number} [filters.source_id] - Filter by data source.
- * @param {string} [filters.meal_type] - Filter by meal type.
- * @param {string} [filters.from] - Start of time range (inclusive).
- * @param {string} [filters.to] - End of time range (inclusive).
- * @param {number} [filters.limit=100] - Max results.
- * @param {number} [filters.offset=0] - Pagination offset.
- * @returns {Object[]} Records ordered by recorded_at ASC.
- */
-export function queryMeals(filters = {}) {
-  let sql = 'SELECT * FROM meals WHERE 1=1';
-  const params = [];
-
-  if (filters.source_id !== undefined) {
-    sql += ' AND source_id = ?';
-    params.push(filters.source_id);
-  }
-
-  if (filters.meal_type !== undefined) {
-    sql += ' AND meal_type = ?';
-    params.push(filters.meal_type);
-  }
-
-  if (filters.from !== undefined) {
-    sql += ' AND recorded_at >= ?';
-    params.push(filters.from);
-  }
-
-  if (filters.to !== undefined) {
-    sql += ' AND recorded_at <= ?';
-    params.push(filters.to);
-  }
-
-  sql += ' ORDER BY recorded_at ASC';
-  sql += ' LIMIT ? OFFSET ?';
-  params.push(filters.limit ?? 100, filters.offset ?? 0);
-
-  return _getDb()
-    .prepare(sql)
-    .all(...params)
-    .map((row) => _parseJsonFields(row, 'items', 'nutrition', 'metadata'));
+    .map((row) => ({ ...row, data: JSON.parse(row.data) }));
 }
 
 /**
@@ -1027,52 +712,11 @@ export function getAllDataSources() {
     .map((row) => ({ ...row, config: JSON.parse(row.config) }));
 }
 
-/**
- * Returns all health metrics ordered by id ASC.
- *
- * @returns {{ id: number, source_id: number, metric_type: string, value: number, unit: string, metadata: Object, recorded_at: string, created_at: string }[]}
- */
-export function getAllHealthMetrics() {
+export function getAllDataRecords() {
   return _getDb()
-    .prepare('SELECT * FROM health_metrics ORDER BY id ASC')
+    .prepare('SELECT * FROM data_records ORDER BY id ASC')
     .all()
-    .map((row) => ({ ...row, metadata: JSON.parse(row.metadata) }));
-}
-
-/**
- * Returns all activities ordered by id ASC.
- *
- * @returns {{ id: number, source_id: number, activity_type: string, duration_minutes: number|null, intensity: string|null, metadata: Object, recorded_at: string, created_at: string }[]}
- */
-export function getAllActivities() {
-  return _getDb()
-    .prepare('SELECT * FROM activities ORDER BY id ASC')
-    .all()
-    .map((row) => ({ ...row, metadata: JSON.parse(row.metadata) }));
-}
-
-/**
- * Returns all grades ordered by id ASC.
- *
- * @returns {{ id: number, source_id: number, subject: string, score: number, scale: string|null, metadata: Object, recorded_at: string, created_at: string }[]}
- */
-export function getAllGrades() {
-  return _getDb()
-    .prepare('SELECT * FROM grades ORDER BY id ASC')
-    .all()
-    .map((row) => ({ ...row, metadata: JSON.parse(row.metadata) }));
-}
-
-/**
- * Returns all meals ordered by id ASC.
- *
- * @returns {{ id: number, source_id: number, meal_type: string, items: Array, nutrition: Object, metadata: Object, recorded_at: string, created_at: string }[]}
- */
-export function getAllMeals() {
-  return _getDb()
-    .prepare('SELECT * FROM meals ORDER BY id ASC')
-    .all()
-    .map((row) => _parseJsonFields(row, 'items', 'nutrition', 'metadata'));
+    .map((row) => ({ ...row, data: JSON.parse(row.data) }));
 }
 
 /**
@@ -1090,23 +734,23 @@ export function getAllEmbeddings() {
     }));
 }
 
-/**
- * Returns row counts for all exportable tables.
- *
- * @returns {{ data_sources: number, entities: number, relations: number, health_metrics: number, activities: number, grades: number, meals: number, embeddings: number }}
- */
 export function getRecordCounts() {
-  const db = _getDb();
-  const count = (table) => db.prepare(`SELECT COUNT(*) AS c FROM ${table}`).get().c;
+  const database = _getDb();
+  const count = (table) => database.prepare(`SELECT COUNT(*) AS c FROM ${table}`).get().c;
+
+  const dataRecordRows = database
+    .prepare('SELECT record_type, COUNT(*) AS c FROM data_records GROUP BY record_type')
+    .all();
+  const dataRecords = {};
+  for (const row of dataRecordRows) {
+    dataRecords[row.record_type] = row.c;
+  }
 
   return {
-    activities: count('activities'),
+    data_records: dataRecords,
     data_sources: count('data_sources'),
     embeddings: count('vec_embeddings'),
     entities: count('entities'),
-    grades: count('grades'),
-    health_metrics: count('health_metrics'),
-    meals: count('meals'),
     relations: count('relations'),
   };
 }
@@ -1144,48 +788,10 @@ export function importDataSource(row) {
     .run(row.id, row.name, row.type, JSON.stringify(row.config), row.is_active, row.created_at, row.updated_at);
 }
 
-/**
- * Imports a health metric with explicit id and timestamps.
- *
- * @param {{ id: number, source_id: number, metric_type: string, value: number, unit: string, metadata: Object, recorded_at: string, created_at: string }} row
- */
-export function importHealthMetric(row) {
+export function importDataRecord(row) {
   _getDb()
-    .prepare('INSERT INTO health_metrics (id, source_id, metric_type, value, unit, metadata, recorded_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
-    .run(row.id, row.source_id, row.metric_type, row.value, row.unit, JSON.stringify(row.metadata), row.recorded_at, row.created_at);
-}
-
-/**
- * Imports an activity with explicit id and timestamps.
- *
- * @param {{ id: number, source_id: number, activity_type: string, duration_minutes: number|null, intensity: string|null, metadata: Object, recorded_at: string, created_at: string }} row
- */
-export function importActivity(row) {
-  _getDb()
-    .prepare('INSERT INTO activities (id, source_id, activity_type, duration_minutes, intensity, metadata, recorded_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
-    .run(row.id, row.source_id, row.activity_type, row.duration_minutes, row.intensity, JSON.stringify(row.metadata), row.recorded_at, row.created_at);
-}
-
-/**
- * Imports a grade with explicit id and timestamps.
- *
- * @param {{ id: number, source_id: number, subject: string, score: number, scale: string|null, metadata: Object, recorded_at: string, created_at: string }} row
- */
-export function importGrade(row) {
-  _getDb()
-    .prepare('INSERT INTO grades (id, source_id, subject, score, scale, metadata, recorded_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
-    .run(row.id, row.source_id, row.subject, row.score, row.scale, JSON.stringify(row.metadata), row.recorded_at, row.created_at);
-}
-
-/**
- * Imports a meal with explicit id and timestamps.
- *
- * @param {{ id: number, source_id: number, meal_type: string, items: Array, nutrition: Object, metadata: Object, recorded_at: string, created_at: string }} row
- */
-export function importMeal(row) {
-  _getDb()
-    .prepare('INSERT INTO meals (id, source_id, meal_type, items, nutrition, metadata, recorded_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
-    .run(row.id, row.source_id, row.meal_type, JSON.stringify(row.items), JSON.stringify(row.nutrition), JSON.stringify(row.metadata), row.recorded_at, row.created_at);
+    .prepare('INSERT INTO data_records (id, source_id, record_type, data, recorded_at, created_at) VALUES (?, ?, ?, ?, ?, ?)')
+    .run(row.id, row.source_id, row.record_type, JSON.stringify(row.data), row.recorded_at, row.created_at);
 }
 
 /**
