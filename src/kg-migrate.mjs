@@ -29,19 +29,27 @@ import {
  *
  * Supported formats:
  *   v1 (legacy) — { entities: { id: {…} }, relations: [{…}] }
- *   v2 (real)   — { version: 2, nodes: [{…}], edges: [{…}], categories: {…}, meta: {…} }
+ *   v2 (real)   — { version: 2, nodes: { id: {…}, … }, edges: [{…}], categories: {…}, meta: {…} }
  *
  * @param {Object} raw - Parsed JSON content.
  * @returns {{ entities: Object<string, Object>, relations: Array<Object> }}
  */
 export function normalizeInput(raw) {
-  // v2: top-level "nodes" array
-  if (Array.isArray(raw.nodes)) {
+  // v2: top-level "nodes" — may be an object keyed by id, or an array
+  if (raw.nodes && typeof raw.nodes === 'object') {
     const entities = {};
-    for (const node of raw.nodes) {
-      const id = node.id;
-      if (id == null) continue;
-      entities[String(id)] = node;
+    if (Array.isArray(raw.nodes)) {
+      // v2 array form: [ { id, label, … }, … ]
+      for (const node of raw.nodes) {
+        const id = node.id;
+        if (id == null) continue;
+        entities[String(id)] = node;
+      }
+    } else {
+      // v2 object form: { "node-id": { id, label, … }, … }
+      for (const [key, node] of Object.entries(raw.nodes)) {
+        entities[key] = node;
+      }
     }
     return { entities, relations: raw.edges || [] };
   }
