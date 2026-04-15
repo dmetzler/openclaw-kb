@@ -2,8 +2,8 @@
 type: schema
 record_type: health_metric
 label: Health Metric
-created_at: '2026-04-15 11:26:17'
-updated_at: '2026-04-15 11:26:17'
+created_at: '2026-04-15 11:29:13'
+updated_at: '2026-04-15 11:29:13'
 ---
 
 # Health Metric

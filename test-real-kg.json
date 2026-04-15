@@ -1,0 +1,2875 @@
+{
+  "version": 2,
+  "meta": {
+    "created": "2026-03-29",
+    "lastConsolidated": null,
+    "entityCount": 120,
+    "edgeCount": 87,
+    "maxDepth": 3
+  },
+  "nodes": {
+    "damien": {
+      "id": "damien",
+      "label": "Damien Metzler",
+      "type": "person",
+      "category": "people",
+      "attrs": {
+        "role": "Senior Solutions Architect",
+        "company": "Hyland (depuis juillet 2025)",
+        "address": "887 route de la Maison Blanche, 59190 Staple",
+        "phone": "+33 6 28 18 77 04",
+        "email": "dmetzler@gmail.com",
+        "github": "github.com/dmetzler",
+        "linkedin": "/in/damienmetzler",
+        "blog": "dmetzler.github.io",
+        "timezone": "Europe/Paris",
+        "isp": "Bouygues Telecom",
+        "languages": "Français (natif), Anglais (courant), Allemand (notions)",
+        "education": "Ingénieur ICAM Lille (1995-2001)",
+        "skills": "GenAI, Architecture, Cloud, Backend, DevOps, Kubernetes, Terraform, Java, Python, Go"
+      },
+      "tags": [
+        "#owner",
+        "#family"
+      ],
+      "children": [
+        "wife",
+        "anais",
+        "titouan",
+        "cyril"
+      ],
+      "created": "2026-03-29",
+      "updated": "2026-03-29",
+      "confidence": 1
+    },
+    "wife": {
+      "id": "wife",
+      "label": "Juliette Metzler",
+      "type": "person",
+      "category": "people",
+      "attrs": {
+        "relation": "épouse",
+        "phone": "+33628378538",
+        "profession": "Formatrice IFSI Tourcoing (Croix-Rouge)",
+        "background": "Infirmière de formation, formatrice depuis 2021",
+        "interests": "IA générative appliquée à la pédagogie"
+      },
+      "tags": [
+        "#family"
+      ],
+      "parent": "damien",
+      "children": [],
+      "created": "2026-03-29",
+      "updated": "2026-03-29",
+      "confidence": 0.9
+    },
+    "anais": {
+      "id": "anais",
+      "label": "Anaïs Metzler",
+      "type": "person",
+      "category": "people",
+      "attrs": {
+        "age": "18",
+        "relation": "fille",
+        "school": "Faculté de droit (1ère année, 2025-2026)",
+        "apps": "Snapchat, WhatsApp"
+      },
+      "tags": [
+        "#family"
+      ],
+      "parent": "damien",
+      "children": [],
+      "created": "2026-03-29",
+      "updated": "2026-03-29",
+      "confidence": 1
+    },
+    "titouan": {
+      "id": "titouan",
+      "label": "Titouan Metzler",
+      "type": "person",
+      "category": "people",
+      "attrs": {
+        "age": "16",
+        "relation": "fils",
+        "school": "Lycée — Première (2025-2026)",
+        "school_app": "EcoleDirecte",
+        "apps": "Snapchat, WhatsApp"
+      },
+      "tags": [
+        "#family"
+      ],
+      "parent": "damien",
+      "children": [],
+      "created": "2026-03-29",
+      "updated": "2026-03-29",
+      "confidence": 1
+    },
+    "cyril": {
+      "id": "cyril",
+      "label": "Cyril Metzler",
+      "type": "person",
+      "category": "people",
+      "attrs": {
+        "age": "14",
+        "relation": "fils",
+        "school": "Collège — 3ème (2025-2026)",
+        "school_app": "EcoleDirecte",
+        "apps": "Snapchat, WhatsApp"
+      },
+      "tags": [
+        "#family"
+      ],
+      "parent": "damien",
+      "children": [],
+      "created": "2026-03-29",
+      "updated": "2026-03-29",
+      "confidence": 1
+    },
+    "hyland": {
+      "id": "hyland",
+      "label": "Hyland",
+      "type": "organization",
+      "category": "work",
+      "attrs": {
+        "role": "Employeur actuel",
+        "position": "Senior Solutions Architect",
+        "start": "Juillet 2025"
+      },
+      "tags": [
+        "#work"
+      ],
+      "children": [],
+      "created": "2026-03-29",
+      "updated": "2026-03-29",
+      "confidence": 1
+    },
+    "automat-it": {
+      "id": "automat-it",
+      "label": "Automat-IT",
+      "type": "organization",
+      "category": "work",
+      "attrs": {
+        "role": "Ancien employeur",
+        "position": "Senior Solutions Architect - GenAI Lead",
+        "period": "2024-2025",
+        "location": "Lille, France",
+        "notes": "AWS Premier Partner, premier employé région France, GenAI lead, outils internes SA productivity"
+      },
+      "tags": [
+        "#work",
+        "#cloud",
+        "#genai"
+      ],
+      "children": [],
+      "created": "2026-03-29",
+      "updated": "2026-03-29",
+      "confidence": 1
+    },
+    "aws": {
+      "id": "aws",
+      "label": "AWS",
+      "type": "organization",
+      "category": "work",
+      "attrs": {
+        "role": "Ancien employeur",
+        "position": "Senior Solutions Architect",
+        "period": "2022-2024",
+        "location": "Lille, France",
+        "notes": "Enterprise segment ($10M+ ARR), speaker re:Invent/Summit, Women in Tech, certifié SA Pro",
+        "expertise": "deep"
+      },
+      "tags": [
+        "#cloud",
+        "#work"
+      ],
+      "children": [],
+      "created": "2026-03-29",
+      "updated": "2026-03-29",
+      "confidence": 1
+    },
+    "nuxeo": {
+      "id": "nuxeo",
+      "label": "Nuxeo",
+      "type": "organization",
+      "category": "work",
+      "attrs": {
+        "positions": "Principal Cloud Architect (2017-2021, Irvine CA), Solutions Architect (2015-2017, Paris), Software Architect (2013-2015, Paris)",
+        "period": "2013-2021",
+        "highlights": "Nuxeo Cloud SaaS (>50% revenue), PCI-DSS/HiTrust, 11B docs benchmark, Fortune 100 customers",
+        "notes": "Acquis par Hyland — lien avec employeur actuel"
+      },
+      "tags": [
+        "#work",
+        "#cloud",
+        "#saas"
+      ],
+      "children": [],
+      "created": "2026-03-29",
+      "updated": "2026-03-29",
+      "confidence": 1
+    },
+    "leroy-merlin": {
+      "id": "leroy-merlin",
+      "label": "Leroy Merlin",
+      "type": "organization",
+      "category": "work",
+      "attrs": {
+        "role": "Ancien employeur",
+        "position": "Software Architect",
+        "period": "2005-2013",
+        "location": "Lille"
+      },
+      "tags": [
+        "#work"
+      ],
+      "children": [],
+      "created": "2026-03-29",
+      "updated": "2026-03-29",
+      "confidence": 1
+    },
+    "altran": {
+      "id": "altran",
+      "label": "Altran Nord",
+      "type": "organization",
+      "category": "work",
+      "attrs": {
+        "role": "Premier employeur",
+        "position": "Software Consultant",
+        "period": "2001-2005",
+        "clients": "Auchan, Damart"
+      },
+      "tags": [
+        "#work"
+      ],
+      "children": [],
+      "created": "2026-03-29",
+      "updated": "2026-03-29",
+      "confidence": 1
+    },
+    "isen": {
+      "id": "isen",
+      "label": "ISEN Lille",
+      "type": "organization",
+      "category": "work",
+      "attrs": {
+        "role": "Professeur vacataire",
+        "period": "2010-2017",
+        "course": "Industrialisation du développement Java (TDD, IoC, JEE)"
+      },
+      "tags": [
+        "#teaching"
+      ],
+      "children": [],
+      "created": "2026-03-29",
+      "updated": "2026-03-29",
+      "confidence": 1
+    },
+    "icam": {
+      "id": "icam",
+      "label": "ICAM Lille",
+      "type": "organization",
+      "category": "education",
+      "attrs": {
+        "degree": "Diplôme d'ingénieur (Master of Science)",
+        "period": "1995-2001"
+      },
+      "tags": [
+        "#education"
+      ],
+      "children": [],
+      "created": "2026-03-29",
+      "updated": "2026-03-29",
+      "confidence": 1
+    },
+    "openclaw-server": {
+      "id": "openclaw-server",
+      "label": "OpenClaw Server",
+      "type": "infrastructure",
+      "category": "infra",
+      "attrs": {
+        "host": "EC2 eu-west-3",
+        "os": "Amazon Linux 2023",
+        "agent": "Jarvis",
+        "model": "Claude Opus 4.6",
+        "channels": "Telegram (active)"
+      },
+      "tags": [
+        "#infra",
+        "#openclaw"
+      ],
+      "children": [],
+      "created": "2026-03-29",
+      "updated": "2026-03-29",
+      "confidence": 1
+    },
+    "azure-rampup": {
+      "id": "azure-rampup",
+      "label": "Azure Ramp-up",
+      "type": "project",
+      "category": "work",
+      "attrs": {
+        "status": "upcoming",
+        "goal": "Learn Azure, map from AWS mental models"
+      },
+      "tags": [
+        "#cloud",
+        "#learning"
+      ],
+      "children": [],
+      "created": "2026-03-29",
+      "updated": "2026-03-29",
+      "confidence": 0.9
+    },
+    "whatsapp-setup": {
+      "id": "whatsapp-setup",
+      "label": "WhatsApp Channel Setup",
+      "type": "project",
+      "category": "infra",
+      "attrs": {
+        "status": "planned",
+        "approach": "eSIM dédié (via iPad)",
+        "goal": "Canal WhatsApp pour famille + agents"
+      },
+      "tags": [
+        "#openclaw",
+        "#planned"
+      ],
+      "children": [],
+      "created": "2026-03-29",
+      "updated": "2026-03-29",
+      "confidence": 0.9
+    },
+    "ecoledirecte": {
+      "id": "ecoledirecte",
+      "label": "EcoleDirecte",
+      "type": "service",
+      "category": "family",
+      "attrs": {
+        "purpose": "Suivi scolaire enfants",
+        "api": "ecoledirecte.js (npm, unofficial)",
+        "skill_status": "à créer"
+      },
+      "tags": [
+        "#school",
+        "#family"
+      ],
+      "children": [],
+      "created": "2026-03-29",
+      "updated": "2026-03-29",
+      "confidence": 0.9
+    },
+    "certifications": {
+      "id": "certifications",
+      "label": "Certifications",
+      "type": "knowledge",
+      "category": "work",
+      "attrs": {
+        "list": "AWS SA Pro (2022), AWS SA Associate (2017), AWS Serverless (2023), Deep Learning Specialization Coursera (2024), Scala FP (2012)"
+      },
+      "tags": [
+        "#certifications",
+        "#cloud"
+      ],
+      "children": [],
+      "created": "2026-03-29",
+      "updated": "2026-03-29",
+      "confidence": 1
+    },
+    "edouard_viot": {
+      "id": "edouard_viot",
+      "alias": "ED",
+      "type": "human",
+      "label": "Édouard Viot",
+      "parent": null,
+      "tags": [
+        "edouard",
+        "viot",
+        "symbiotic"
+      ],
+      "attrs": {
+        "company": "Symbiotic",
+        "context": "Contact à recontacter"
+      },
+      "created": "2026-04-01",
+      "updated": "2026-04-01"
+    },
+    "symbiotic": {
+      "id": "symbiotic",
+      "alias": "SY",
+      "type": "org",
+      "label": "Symbiotic",
+      "parent": null,
+      "tags": [
+        "symbiotic"
+      ],
+      "attrs": {},
+      "created": "2026-04-01",
+      "updated": "2026-04-01"
+    },
+    "aws_summit_paris_2026": {
+      "id": "aws_summit_paris_2026",
+      "alias": "AW",
+      "type": "event",
+      "label": "AWS Summit Paris 2026",
+      "parent": null,
+      "tags": [
+        "aws",
+        "summit",
+        "paris",
+        "2026"
+      ],
+      "attrs": {
+        "date": "2026-04-01",
+        "location": "Paris"
+      },
+      "created": "2026-04-01",
+      "updated": "2026-04-01"
+    },
+    "yecine_allouache": {
+      "id": "yecine_allouache",
+      "alias": "YE",
+      "type": "human",
+      "label": "Yecine Allouache",
+      "parent": null,
+      "tags": [
+        "yecine",
+        "allouache",
+        "aws",
+        "sa"
+      ],
+      "attrs": {
+        "role": "Solutions Architect",
+        "company": "AWS"
+      },
+      "created": "2026-04-01",
+      "updated": "2026-04-01"
+    },
+    "cfs": {
+      "id": "cfs",
+      "alias": "CF",
+      "type": "project",
+      "label": "CFS",
+      "parent": null,
+      "tags": [
+        "cfs",
+        "hyland",
+        "network",
+        "connectivity"
+      ],
+      "attrs": {
+        "context": "Projet Hyland nécessitant connectivité réseau avec AWS"
+      },
+      "created": "2026-04-01",
+      "updated": "2026-04-01"
+    },
+    "gitguardian": {
+      "id": "gitguardian",
+      "alias": "GI",
+      "type": "service",
+      "label": "GitGuardian",
+      "parent": null,
+      "tags": [
+        "gitguardian",
+        "security",
+        "credentials",
+        "secrets",
+        "leak"
+      ],
+      "attrs": {
+        "category": "Security",
+        "use_case": "Leaked credentials detection",
+        "status": "PoC evaluation"
+      },
+      "created": "2026-04-01",
+      "updated": "2026-04-01"
+    },
+    "kings_new_datacenters": {
+      "id": "kings_new_datacenters",
+      "alias": "KI",
+      "type": "knowledge",
+      "label": "The King's New Datacenters",
+      "parent": null,
+      "tags": [
+        "datacenters",
+        "AI",
+        "infrastructure",
+        "France",
+        "sovereignty",
+        "souveraineté",
+        "GPU",
+        "CAPEX",
+        "politique industrielle",
+        "industrial policy"
+      ],
+      "attrs": {
+        "url": "https://www.airealist.ai/p/the-kings-new-datacenters",
+        "date": "2026-03-23",
+        "author": "AI Realist (Substack)",
+        "shared_by": "Julien Simon"
+      },
+      "created": "2026-04-01",
+      "updated": "2026-04-01"
+    },
+    "domain_ai_infra_france": {
+      "id": "domain_ai_infra_france",
+      "alias": "DO",
+      "type": "concept",
+      "label": "AI Infrastructure France",
+      "parent": "kings_new_datacenters",
+      "tags": [
+        "AI infrastructure",
+        "France",
+        "datacenter",
+        "compute souverain",
+        "sovereign compute"
+      ],
+      "attrs": {},
+      "created": "2026-04-01",
+      "updated": "2026-04-01"
+    },
+    "domain_summit_accountability": {
+      "id": "domain_summit_accountability",
+      "alias": "DO",
+      "type": "concept",
+      "label": "Summit Pledge Accountability",
+      "parent": "kings_new_datacenters",
+      "tags": [
+        "accountability",
+        "pledges",
+        "MOU",
+        "summit",
+        "promises"
+      ],
+      "attrs": {},
+      "created": "2026-04-01",
+      "updated": "2026-04-01"
+    },
+    "domain_sovereign_ai": {
+      "id": "domain_sovereign_ai",
+      "alias": "DO",
+      "type": "concept",
+      "label": "Sovereign AI Reality Gap",
+      "parent": "kings_new_datacenters",
+      "tags": [
+        "sovereignty",
+        "souveraineté",
+        "champion national",
+        "Mistral",
+        "compute"
+      ],
+      "attrs": {},
+      "created": "2026-04-01",
+      "updated": "2026-04-01"
+    },
+    "mech_pledge_framework": {
+      "id": "mech_pledge_framework",
+      "alias": "ME",
+      "type": "concept",
+      "label": "Pledge Accountability Framework",
+      "parent": "domain_summit_accountability",
+      "tags": [],
+      "attrs": {
+        "description": "5-tier scale: MOU → LOI → PPA/binding contract → Construction underway → Operational"
+      },
+      "created": "2026-04-01",
+      "updated": "2026-04-01"
+    },
+    "mech_pledge_equity_ratio": {
+      "id": "mech_pledge_equity_ratio",
+      "alias": "ME",
+      "type": "concept",
+      "label": "Pledge-to-Equity Ratio",
+      "parent": "domain_summit_accountability",
+      "tags": [],
+      "attrs": {
+        "description": "Ratio between announced investment and actual equity. FluidStack: 2222x, Evroc: 79x"
+      },
+      "created": "2026-04-01",
+      "updated": "2026-04-01"
+    },
+    "mech_brownfield_dev": {
+      "id": "mech_brownfield_dev",
+      "alias": "ME",
+      "type": "concept",
+      "label": "Brownfield Datacenter Development",
+      "parent": "domain_ai_infra_france",
+      "tags": [],
+      "attrs": {
+        "description": "Reuse of former industrial/military land for datacenters, compliant with zero-net-artificialization law"
+      },
+      "created": "2026-04-01",
+      "updated": "2026-04-01"
+    },
+    "mech_post_arenh": {
+      "id": "mech_post_arenh",
+      "alias": "ME",
+      "type": "concept",
+      "label": "Post-ARENH Energy Pricing",
+      "parent": "domain_ai_infra_france",
+      "tags": [],
+      "attrs": {
+        "description": "ARENH expired end 2025, new nuclear energy pricing framework for datacenters"
+      },
+      "created": "2026-04-01",
+      "updated": "2026-04-01"
+    },
+    "mech_levy_ratchet": {
+      "id": "mech_levy_ratchet",
+      "alias": "ME",
+      "type": "concept",
+      "label": "Levy Ratchet Pattern",
+      "parent": "domain_sovereign_ai",
+      "tags": [],
+      "attrs": {
+        "description": "Register, Disclose, Pay - EU pattern where enforcement fails and a levy fills the gap. Mistral now proposing 1-1.5% revenue levy on AI operators"
+      },
+      "created": "2026-04-01",
+      "updated": "2026-04-01"
+    },
+    "fluidstack": {
+      "id": "fluidstack",
+      "alias": "FL",
+      "type": "org",
+      "label": "FluidStack",
+      "parent": "mech_pledge_framework",
+      "tags": [],
+      "attrs": {
+        "role": "GPU cloud provider",
+        "pledge": "10B EUR",
+        "equity": "4.5M USD",
+        "ratio": "2222x",
+        "status": "Left France March 2026, moved to USA, 50B$ deal with Anthropic"
+      },
+      "created": "2026-04-01",
+      "updated": "2026-04-01"
+    },
+    "sesterce": {
+      "id": "sesterce",
+      "alias": "SE",
+      "type": "org",
+      "label": "Sesterce",
+      "parent": "mech_pledge_framework",
+      "tags": [],
+      "attrs": {
+        "role": "GPU cloud provider (ex-crypto mining)",
+        "pledge": "52B EUR",
+        "employees": 60,
+        "status": "Judicial restructuring Feb 2026"
+      },
+      "created": "2026-04-01",
+      "updated": "2026-04-01"
+    },
+    "campus_ia_mgx": {
+      "id": "campus_ia_mgx",
+      "alias": "CA",
+      "type": "org",
+      "label": "Campus IA / MGX",
+      "parent": "mech_pledge_framework",
+      "tags": [],
+      "attrs": {
+        "role": "Datacenter site developer",
+        "pledge": "30-50B EUR",
+        "employees": 7,
+        "site": "Fouju farmland",
+        "status": "No operator signed, no permits issued"
+      },
+      "created": "2026-04-01",
+      "updated": "2026-04-01"
+    },
+    "data4": {
+      "id": "data4",
+      "alias": "DA",
+      "type": "org",
+      "label": "Data4 / Brookfield",
+      "parent": "mech_brownfield_dev",
+      "tags": [],
+      "attrs": {
+        "role": "Industrial datacenter operator",
+        "pledge": "20B EUR (Brookfield)",
+        "sites": "Cambrai (ex-BA103), Nozay (ex-Nokia), Escaudain (ex-Usinor)",
+        "financing": "3.3B EUR debt Jan 2025",
+        "status": "Serious industrial approach, multi-year"
+      },
+      "created": "2026-04-01",
+      "updated": "2026-04-01"
+    },
+    "scaleway_niel": {
+      "id": "scaleway_niel",
+      "alias": "SC",
+      "type": "org",
+      "label": "Scaleway / Xavier Niel",
+      "parent": "domain_ai_infra_france",
+      "tags": [],
+      "attrs": {
+        "role": "European AI cloud",
+        "pledge": "3B EUR (formalized existing)",
+        "gpus": "~5000 operational pre-summit",
+        "related": "Kyutai (300M EUR), Opcore/InfraVia (2.5B EUR)",
+        "status": "Only operational sovereign AI compute at scale in France"
+      },
+      "created": "2026-04-01",
+      "updated": "2026-04-01"
+    },
+    "mistral_ai": {
+      "id": "mistral_ai",
+      "alias": "MI",
+      "type": "org",
+      "label": "Mistral AI",
+      "parent": "domain_sovereign_ai",
+      "tags": [],
+      "attrs": {
+        "role": "French AI champion",
+        "revenue": "400M USD ARR",
+        "valuation": "11.7B EUR",
+        "compute": "Azure, DGX Cloud, Nvidia partnership",
+        "first_dc_abroad": "1.2B EUR Sweden",
+        "status": "Sovereign label but American infra stack"
+      },
+      "created": "2026-04-01",
+      "updated": "2026-04-01"
+    },
+    "evroc": {
+      "id": "evroc",
+      "alias": "EV",
+      "type": "org",
+      "label": "Evroc",
+      "parent": "mech_pledge_framework",
+      "tags": [],
+      "attrs": {
+        "role": "Swedish sovereign cloud",
+        "pledge": "4B EUR",
+        "equity": "50.6M EUR Series A",
+        "ratio": "79x"
+      },
+      "created": "2026-04-01",
+      "updated": "2026-04-01"
+    },
+    "julien_simon": {
+      "id": "julien_simon",
+      "alias": "JU",
+      "type": "human",
+      "label": "Julien Simon",
+      "parent": null,
+      "tags": [],
+      "attrs": {
+        "role": "AI thought leader, shared article on LinkedIn"
+      },
+      "created": "2026-04-01",
+      "updated": "2026-04-01"
+    },
+    "paris_ai_summit_2025": {
+      "id": "paris_ai_summit_2025",
+      "alias": "PA",
+      "type": "event",
+      "label": "Paris AI Summit 2025",
+      "parent": "domain_summit_accountability",
+      "tags": [],
+      "attrs": {
+        "date": "2025-02-11",
+        "location": "Station F, Paris",
+        "headline": "109B EUR AI investment pledges"
+      },
+      "created": "2026-04-01",
+      "updated": "2026-04-01"
+    },
+    "tugdual_grall": {
+      "id": "tugdual_grall",
+      "alias": "TU",
+      "type": "human",
+      "label": "Tugdual Grall",
+      "parent": null,
+      "tags": [
+        "tugdual",
+        "grall",
+        "github",
+        "copilot",
+        "tug"
+      ],
+      "attrs": {
+        "role": "GitHub",
+        "context": "Connaissance de longue date de Damien"
+      },
+      "created": "2026-04-01",
+      "updated": "2026-04-01"
+    },
+    "xavier_noya": {
+      "id": "xavier_noya",
+      "alias": "XA",
+      "type": "human",
+      "label": "Xavier Noya",
+      "parent": null,
+      "tags": [
+        "xavier",
+        "noya",
+        "betclic"
+      ],
+      "attrs": {
+        "role": "Betclic"
+      },
+      "created": "2026-04-01",
+      "updated": "2026-04-01"
+    },
+    "betclic": {
+      "id": "betclic",
+      "alias": "BE",
+      "type": "org",
+      "label": "Betclic",
+      "parent": null,
+      "tags": [
+        "betclic",
+        "gaming",
+        "paris sportifs"
+      ],
+      "attrs": {
+        "sector": "Paris sportifs / Gaming"
+      },
+      "created": "2026-04-01",
+      "updated": "2026-04-01"
+    },
+    "github": {
+      "id": "github",
+      "alias": "GI",
+      "type": "org",
+      "label": "GitHub",
+      "parent": null,
+      "tags": [
+        "github",
+        "copilot",
+        "microsoft",
+        "devtools"
+      ],
+      "attrs": {
+        "sector": "DevTools, Copilot"
+      },
+      "created": "2026-04-01",
+      "updated": "2026-04-01"
+    },
+    "fred_visticot": {
+      "id": "fred_visticot",
+      "alias": "FR",
+      "type": "human",
+      "label": "Fred Visticot",
+      "parent": null,
+      "tags": [
+        "fred",
+        "visticot",
+        "momentum"
+      ],
+      "attrs": {
+        "context": "Ancien collègue, projet Momentum, revu au Summit AWS 2026"
+      },
+      "created": "2026-04-01",
+      "updated": "2026-04-01"
+    },
+    "momentum_project": {
+      "id": "momentum_project",
+      "alias": "MO",
+      "type": "project",
+      "label": "Momentum",
+      "parent": null,
+      "tags": [
+        "momentum",
+        "fred visticot"
+      ],
+      "attrs": {
+        "owner": "Fred Visticot",
+        "status": "À découvrir"
+      },
+      "created": "2026-04-01",
+      "updated": "2026-04-01"
+    },
+    "nucleo-rnr-video": {
+      "id": "nucleo-rnr-video",
+      "alias": "NU",
+      "type": "knowledge",
+      "label": "1000 ans de carburant nucléaire — Monsieur Bidouille",
+      "parent": null,
+      "tags": [
+        "nuclear",
+        "rnr",
+        "plomb",
+        "smr",
+        "gen4",
+        "energy"
+      ],
+      "attrs": {
+        "source": "YouTube — Monsieur Bidouille",
+        "url": "https://www.youtube.com/watch?v=07JuOGP_2hI",
+        "date": "2026",
+        "field": "nuclear energy",
+        "summary": "Vidéo sur le LFR AS30 de Nucléo, réacteur à neutrons rapides au plomb, incinérateur de plutonium. Techno issue de Super Phénix + sous-marins soviétiques. Débat public CNDP."
+      },
+      "created": "2026-04-03",
+      "updated": "2026-04-03"
+    },
+    "nucleo": {
+      "id": "nucleo",
+      "alias": "NU",
+      "type": "org",
+      "label": "Nucléo",
+      "parent": "nucleo-rnr-video",
+      "tags": [],
+      "attrs": {
+        "type": "startup nucléaire",
+        "project": "LFR AS30 (30MW) + LFR AS200 (200MW)",
+        "target": "60 réacteurs 2050",
+        "cost": "1.2Md€ AS30 + 1.8Md€ usine MOX"
+      },
+      "created": "2026-04-03",
+      "updated": "2026-04-03"
+    },
+    "lam_villeneuve_ascq": {
+      "id": "lam_villeneuve_ascq",
+      "alias": "LA",
+      "type": "place",
+      "label": "LaM - Musée d'art moderne",
+      "parent": null,
+      "tags": [
+        "lam",
+        "musee",
+        "villeneuve-d-ascq",
+        "art-moderne",
+        "lille"
+      ],
+      "attrs": {
+        "location": "Villeneuve-d'Ascq, Nord, France",
+        "description": "Musée d'art moderne, d'art contemporain et d'art brut"
+      },
+      "created": "2026-04-05",
+      "updated": "2026-04-05"
+    },
+    "visite_lam_kandinsky_20260404": {
+      "id": "visite_lam_kandinsky_20260404",
+      "alias": "VI",
+      "type": "event",
+      "label": "Visite LaM — Expo Kandinsky",
+      "parent": "lam_villeneuve_ascq",
+      "tags": [
+        "kandinsky",
+        "exposition",
+        "art",
+        "peinture",
+        "abstraction"
+      ],
+      "attrs": {
+        "date": "2026-04-04",
+        "description": "Visite de l'expo Kandinsky au LaM. Œuvres vues: Auf Weiss II (1923), In Grau (1919), Improvisation III (1909), Composition IX (1936), Gelb-Rot-Blau (1925), table de correspondances Bauhaus, frise chronologique."
+      },
+      "created": "2026-04-05",
+      "updated": "2026-04-05"
+    },
+    "wassily_kandinsky": {
+      "id": "wassily_kandinsky",
+      "alias": "WA",
+      "type": "human",
+      "label": "Wassily Kandinsky",
+      "parent": null,
+      "tags": [
+        "kandinsky",
+        "peintre",
+        "abstraction",
+        "bauhaus",
+        "art-moderne"
+      ],
+      "attrs": {
+        "role": "Peintre, pionnier de l'art abstrait",
+        "dates": "1866-1944"
+      },
+      "created": "2026-04-05",
+      "updated": "2026-04-05"
+    },
+    "apel": {
+      "id": "apel",
+      "alias": "AP",
+      "type": "org",
+      "label": "APEL",
+      "parent": null,
+      "tags": [
+        "apel",
+        "parents",
+        "école",
+        "association"
+      ],
+      "attrs": {
+        "description": "Association de Parents d Élèves Licenciés - association parentale liée aux écoles des enfants",
+        "role": "Damien est président"
+      },
+      "created": "2026-04-08",
+      "updated": "2026-04-08"
+    },
+    "saint-jacques-hazebrouck": {
+      "id": "saint-jacques-hazebrouck",
+      "alias": "SA",
+      "type": "org",
+      "label": "Collège Saint-Jacques Hazebrouck",
+      "parent": null,
+      "tags": [
+        "saint-jacques",
+        "hazebrouck",
+        "collège",
+        "cyril",
+        "école"
+      ],
+      "attrs": {
+        "type": "collège privé",
+        "location": "Hazebrouck",
+        "contact": "Marylène Cardinael (adjointe de direction)"
+      },
+      "created": "2026-04-08",
+      "updated": "2026-04-08"
+    },
+    "bedrock-iam-cost-allocation": {
+      "id": "bedrock-iam-cost-allocation",
+      "alias": "BE",
+      "type": "knowledge",
+      "label": "Bedrock IAM Cost Allocation",
+      "parent": null,
+      "tags": [
+        "bedrock",
+        "finops",
+        "cost-allocation",
+        "iam",
+        "aws",
+        "genai",
+        "chargeback",
+        "cur2",
+        "billing"
+      ],
+      "attrs": {
+        "source": "LinkedIn post by Loïc Fournier",
+        "url": "https://www.linkedin.com/posts/loicfournier_amazonbedrock-bedrock-bedrockai-share-7448225040850096130-5CA1",
+        "date": "2026-04",
+        "field": "AWS FinOps / GenAI",
+        "summary": "Bedrock supporte le cost allocation natif par rôle IAM — tag tes rôles, active CUR 2.0 caller identity, et ventile les coûts d inférence par app/team/env dans Cost Explorer. Dispo toutes régions commerciales."
+      },
+      "created": "2026-04-10",
+      "updated": "2026-04-10"
+    },
+    "bedrock-cost-how-it-works": {
+      "id": "bedrock-cost-how-it-works",
+      "alias": "BE",
+      "type": "concept",
+      "label": "Mécanisme: Tag IAM → CUR 2.0 → Cost Explorer",
+      "parent": "bedrock-iam-cost-allocation",
+      "tags": [
+        "iam",
+        "tagging",
+        "cur2",
+        "cost-explorer"
+      ],
+      "attrs": {
+        "steps": "1. Tag IAM roles (app/team/project/env) → 2. Activate as cost allocation tags → 3. Create CUR 2.0 export with caller identity → 4. Analyze per-app in Cost Explorer",
+        "context": "Multi-app Bedrock accounts"
+      },
+      "created": "2026-04-10",
+      "updated": "2026-04-10"
+    },
+    "bedrock-cost-use-cases": {
+      "id": "bedrock-cost-use-cases",
+      "alias": "BE",
+      "type": "concept",
+      "label": "Use Cases: Chargeback, Env Split, CI/CD Detection",
+      "parent": "bedrock-iam-cost-allocation",
+      "tags": [
+        "chargeback",
+        "finops",
+        "budget",
+        "governance"
+      ],
+      "attrs": {
+        "summary": "Multi-app cost split, dev/staging/prod séparation, team chargeback par rôle IAM, détection CI/CD gourmand, budget alerts par appli via AWS Budgets"
+      },
+      "created": "2026-04-10",
+      "updated": "2026-04-10"
+    },
+    "loic-fournier": {
+      "id": "loic-fournier",
+      "alias": "LO",
+      "type": "human",
+      "label": "Loïc Fournier",
+      "parent": null,
+      "tags": [
+        "aws",
+        "linkedin",
+        "bedrock"
+      ],
+      "attrs": {
+        "role": "AWS community / LinkedIn poster"
+      },
+      "created": "2026-04-10",
+      "updated": "2026-04-10"
+    },
+    "rtk-token-compression": {
+      "id": "rtk-token-compression",
+      "alias": "RT",
+      "type": "knowledge",
+      "label": "RTK - Token Compression pour Agents IA",
+      "parent": null,
+      "tags": [
+        "rtk",
+        "token-compression",
+        "rust",
+        "open-source",
+        "llm",
+        "finops",
+        "claude-code",
+        "cursor",
+        "copilot",
+        "ai-coding",
+        "greentech"
+      ],
+      "attrs": {
+        "source": "LinkedIn post by Patrick Szymkowiak (rtk-ai labs)",
+        "url": "https://www.linkedin.com/posts/patrick-szymkowiak_rtk-opensource-rust-share-7447600491615645696-Wp7E",
+        "date": "2026-04",
+        "field": "AI DevTools / Token Optimization",
+        "summary": "Binaire Rust open-source qui compresse les tokens avant envoi aux agents IA. 20k stars GitHub, 300 milliards tokens économisés en 30 jours. Compatible Claude Code, Cursor, Copilot. RTK Cloud arrive: dashboard équipe, sécurité, analytics, mémoire partagée entre agents."
+      },
+      "created": "2026-04-10",
+      "updated": "2026-04-10"
+    },
+    "rtk-metrics": {
+      "id": "rtk-metrics",
+      "alias": "RT",
+      "type": "concept",
+      "label": "Métriques: 20k stars, 300B tokens/30j",
+      "parent": "rtk-token-compression",
+      "tags": [
+        "metrics",
+        "growth",
+        "adoption"
+      ],
+      "attrs": {
+        "summary": "20k GitHub stars, 300 milliards tokens économisés en 30j, 500 stars/jour, 100 nouveaux utilisateurs/jour. Économie énergie eq. ville 3500 hab pendant 1 an."
+      },
+      "created": "2026-04-10",
+      "updated": "2026-04-10"
+    },
+    "rtk-cloud": {
+      "id": "rtk-cloud",
+      "alias": "RT",
+      "type": "concept",
+      "label": "RTK Cloud (à venir)",
+      "parent": "rtk-token-compression",
+      "tags": [
+        "saas",
+        "cloud",
+        "roadmap"
+      ],
+      "attrs": {
+        "summary": "Version cloud en beta: dashboard équipe, sécurité, analytics, mémoire partagée entre agents",
+        "status": "early testers bientôt"
+      },
+      "created": "2026-04-10",
+      "updated": "2026-04-10"
+    },
+    "patrick-szymkowiak": {
+      "id": "patrick-szymkowiak",
+      "alias": "PA",
+      "type": "human",
+      "label": "Patrick Szymkowiak",
+      "parent": null,
+      "tags": [
+        "rtk",
+        "founder",
+        "rust",
+        "hauts-de-france"
+      ],
+      "attrs": {
+        "role": "Fondateur rtk-ai labs"
+      },
+      "created": "2026-04-10",
+      "updated": "2026-04-10"
+    },
+    "rtk-ai-labs": {
+      "id": "rtk-ai-labs",
+      "alias": "RT",
+      "type": "org",
+      "label": "rtk-ai labs",
+      "parent": null,
+      "tags": [
+        "startup",
+        "rust",
+        "ai",
+        "euratechnologies",
+        "hauts-de-france"
+      ],
+      "attrs": {
+        "sector": "AI DevTools / Token Compression",
+        "location": "EuraTechnologies, Hauts-de-France",
+        "github_stars": "20000+"
+      },
+      "created": "2026-04-10",
+      "updated": "2026-04-10"
+    },
+    "entire-io": {
+      "id": "entire-io",
+      "alias": "EN",
+      "type": "knowledge",
+      "label": "Entire.io - Versioning des conversations LLM + code",
+      "parent": null,
+      "tags": [
+        "entire",
+        "entire-io",
+        "git",
+        "llm",
+        "code-review",
+        "pr",
+        "versionning",
+        "ai-coding",
+        "open-source",
+        "claude-code",
+        "codex",
+        "cursor"
+      ],
+      "attrs": {
+        "source": "LinkedIn post by Nicolas Martignole (Back Market)",
+        "url": "https://www.linkedin.com/posts/nmartignole_nicolas-martignole-share-7447585189498761217-qqA_",
+        "date": "2026-04",
+        "field": "AI DevTools / Code Review",
+        "summary": "Outil qui associe et sauvegarde les conversations LLM avec les changements de code dans Git. Permet de voir dans une PR les fichiers modifiés par le LLM ET la discussion dev/agent. Facilite les code reviews et l optimisation des prompts. Client open-source, SaaS gratuit pour le moment.",
+        "site": "https://entire.io/"
+      },
+      "created": "2026-04-10",
+      "updated": "2026-04-10"
+    },
+    "entire-io-concept": {
+      "id": "entire-io-concept",
+      "alias": "EN",
+      "type": "concept",
+      "label": "PR + conversation LLM = code review enrichie",
+      "parent": "entire-io",
+      "tags": [
+        "code-review",
+        "pr",
+        "prompt-review"
+      ],
+      "attrs": {
+        "summary": "Associe dans une PR: fichiers modifiés par l agent + échange dev/LLM + tools utilisés. Permet review du code ET des prompts.",
+        "context": "Équipes utilisant des AI coding agents (Claude Code, Codex CLI, Cursor)"
+      },
+      "created": "2026-04-10",
+      "updated": "2026-04-10"
+    },
+    "entire-io-company": {
+      "id": "entire-io-company",
+      "alias": "EN",
+      "type": "org",
+      "label": "Entire.io (company)",
+      "parent": "entire-io",
+      "tags": [
+        "startup",
+        "ai-devtools",
+        "github"
+      ],
+      "attrs": {
+        "founder": "Thomas Dohmke (ex-CEO GitHub)",
+        "funding": "60M$ (février 2026)",
+        "status": "Client open-source, SaaS gratuit, pas encore d offre entreprise"
+      },
+      "created": "2026-04-10",
+      "updated": "2026-04-10"
+    },
+    "thomas-dohmke": {
+      "id": "thomas-dohmke",
+      "alias": "TH",
+      "type": "human",
+      "label": "Thomas Dohmke",
+      "parent": null,
+      "tags": [
+        "github",
+        "entire",
+        "ceo"
+      ],
+      "attrs": {
+        "role": "Fondateur Entire.io, ex-CEO GitHub"
+      },
+      "created": "2026-04-10",
+      "updated": "2026-04-10"
+    },
+    "nicolas-martignole": {
+      "id": "nicolas-martignole",
+      "alias": "NI",
+      "type": "human",
+      "label": "Nicolas Martignole",
+      "parent": null,
+      "tags": [
+        "devoxx",
+        "back-market",
+        "linkedin"
+      ],
+      "attrs": {
+        "role": "Back Market, organisateur Devoxx France"
+      },
+      "created": "2026-04-10",
+      "updated": "2026-04-10"
+    },
+    "karpathy-llm-wiki": {
+      "id": "karpathy-llm-wiki",
+      "alias": "KA",
+      "type": "knowledge",
+      "label": "Karpathy LLM Wiki Pattern",
+      "parent": null,
+      "tags": [
+        "karpathy",
+        "llm-wiki",
+        "knowledge-base",
+        "compiled-wiki",
+        "rag",
+        "knowledge-management",
+        "personal-ai"
+      ],
+      "attrs": {
+        "source": "LinkedIn post by Rohit Ghumare (motia) + Karpathy gist",
+        "url": "https://www.linkedin.com/posts/rohit-ghumare_karpathy-just-published-his-llm-wiki-pattern-share-7446887123250647040-KQUe",
+        "date": "2026-04",
+        "field": "AI Knowledge Management",
+        "summary": "Pattern: LLM compile et maintient un wiki structuré à partir de sources, au lieu de re-dériver via RAG à chaque query. Cross-refs, contradictions flaggées, knowledge qui se cumule. 5k stars overnight. Rohit Ghumare a forké avec v2: lifecycle, KG, hybrid search, automation, multi-agent, quality controls."
+      },
+      "created": "2026-04-10",
+      "updated": "2026-04-10"
+    },
+    "andrej-karpathy": {
+      "id": "andrej-karpathy",
+      "alias": "AN",
+      "type": "human",
+      "label": "Andrej Karpathy",
+      "parent": null,
+      "tags": [
+        "tesla",
+        "openai",
+        "ai",
+        "deep-learning"
+      ],
+      "attrs": {
+        "role": "AI researcher, ex-Tesla AI, ex-OpenAI"
+      },
+      "created": "2026-04-10",
+      "updated": "2026-04-10"
+    },
+    "rohit-ghumare": {
+      "id": "rohit-ghumare",
+      "alias": "RO",
+      "type": "human",
+      "label": "Rohit Ghumare",
+      "parent": null,
+      "tags": [
+        "motia",
+        "agentmemory"
+      ],
+      "attrs": {
+        "role": "motia, créateur agentmemory"
+      },
+      "created": "2026-04-10",
+      "updated": "2026-04-10"
+    },
+    "agent-reach": {
+      "id": "agent-reach",
+      "alias": "AG",
+      "type": "knowledge",
+      "label": "Agent-Reach - CLI web access pour agents IA",
+      "parent": null,
+      "tags": [
+        "agent-reach",
+        "python",
+        "cli",
+        "web-scraping",
+        "twitter",
+        "youtube",
+        "reddit",
+        "github",
+        "ai-agent",
+        "claude-code",
+        "cursor",
+        "copilot",
+        "open-source"
+      ],
+      "attrs": {
+        "source": "LinkedIn post by Stanislav Beliaev + GitHub repo",
+        "url": "https://github.com/Panniantong/Agent-Reach",
+        "date": "2026-04",
+        "field": "AI Agent Tooling",
+        "summary": "Python CLI qui donne aux agents IA accès au web: X/Twitter, Reddit, YouTube, GitHub, RSS, pages web. Pas d API payante, setup en une ligne. 16k stars GitHub. Compatible Claude Code, Cursor, Windsurf. Commande agent-reach doctor pour vérifier l état.",
+        "github_stars": "16000+",
+        "action": "À tester pour voir si pertinent pour OpenClaw/Jarvis"
+      },
+      "created": "2026-04-10",
+      "updated": "2026-04-10"
+    },
+    "agent-reach-platforms": {
+      "id": "agent-reach-platforms",
+      "alias": "AG",
+      "type": "concept",
+      "label": "Plateformes supportées: X, Reddit, YouTube, GitHub, RSS, 17+",
+      "parent": "agent-reach",
+      "tags": [
+        "platforms",
+        "scraping",
+        "twitter",
+        "youtube",
+        "reddit"
+      ],
+      "attrs": {
+        "summary": "17+ plateformes: X (cookie auth via twitter-cli), Reddit, YouTube (transcripts), GitHub, Bilibili, Weibo, LinkedIn, RSS, pages web classiques. Zero API fees."
+      },
+      "created": "2026-04-10",
+      "updated": "2026-04-10"
+    },
+    "llm-wiki-data-layer": {
+      "id": "llm-wiki-data-layer",
+      "alias": "LL",
+      "type": "knowledge",
+      "label": "LLM Wiki + Data Layer (Postgres)",
+      "parent": null,
+      "tags": [
+        "karpathy",
+        "llm-wiki",
+        "postgres",
+        "data-lake",
+        "compiled-knowledge",
+        "structured-data",
+        "sql",
+        "metrics"
+      ],
+      "attrs": {
+        "source": "LinkedIn post by Claudiu Dascalescu",
+        "url": "https://www.linkedin.com/posts/dascalescu_karpathys-llm-knowledge-base-got-18m-views-share-7447375117183115265-GyEN",
+        "date": "2026-04",
+        "field": "AI Knowledge Management",
+        "summary": "Extension du pattern Karpathy: ajouter un Postgres à côté du wiki markdown. Text sources → LLM → Wiki. Data sources → LLM → Database. Les deux couches se référencent mutuellement. Le wiki cite des SQL queries, les tables de données sont interprétées dans des pages wiki. Ni l un ni l autre seul ne suffit pour des décisions business."
+      },
+      "created": "2026-04-10",
+      "updated": "2026-04-10"
+    },
+    "dual-compiler-pattern": {
+      "id": "dual-compiler-pattern",
+      "alias": "DU",
+      "type": "concept",
+      "label": "Dual Compiler: Wiki + Database",
+      "parent": "llm-wiki-data-layer",
+      "tags": [
+        "architecture",
+        "pattern",
+        "dual-compiler"
+      ],
+      "attrs": {
+        "summary": "Deux compilateurs: texte→wiki (markdown) et données→database (Postgres/SQLite). Les weekly reports (wiki) citent des SQL queries (DB). Les métriques (DB) sont interprétées dans des pages wiki. Knowledge et data se comportent différemment: les concepts se réécrivent, les chiffres s accumulent."
+      },
+      "created": "2026-04-10",
+      "updated": "2026-04-10"
+    },
+    "art_harness_eng": {
+      "id": "art_harness_eng",
+      "alias": "AR",
+      "type": "knowledge",
+      "label": "Making Sense of Harness Engineering",
+      "parent": null,
+      "tags": [
+        "harness",
+        "engineering",
+        "AI",
+        "agents",
+        "XP",
+        "loops",
+        "compounding"
+      ],
+      "attrs": {
+        "url": "https://www.linkedin.com/pulse/making-sense-harness-engineering-henrique-bastos-ezotf",
+        "author": "Henrique Bastos",
+        "date": "2026",
+        "source": "LinkedIn",
+        "summary": "A harness turns ad hoc processes into loops where cost per iteration approaches zero. XP practices (TDD, CI, refactoring) are harness engineering. AI agents make this personal: fix the environment, not the prompt."
+      },
+      "created": "2026-04-11",
+      "updated": "2026-04-11"
+    },
+    "he_ad_hoc_vs_loop": {
+      "id": "he_ad_hoc_vs_loop",
+      "alias": "HE",
+      "type": "concept",
+      "label": "Ad Hoc vs Loop Processes",
+      "parent": "art_harness_eng",
+      "tags": [
+        "process",
+        "loop",
+        "iteration"
+      ],
+      "attrs": {
+        "description": "Ad hoc: output doesnt feed input, requires human memory, constant cost, context lost. Loop: output IS next setup, no memory needed, marginal cost drops to zero, context in artifacts."
+      },
+      "created": "2026-04-11",
+      "updated": "2026-04-11"
+    },
+    "he_harness_fractal": {
+      "id": "he_harness_fractal",
+      "alias": "HE",
+      "type": "concept",
+      "label": "Harness Fractal",
+      "parent": "art_harness_eng",
+      "tags": [
+        "fractal",
+        "abstraction",
+        "levels"
+      ],
+      "attrs": {
+        "description": "Pattern works at every level: code (test suites), tasks (skills/commands), workflows (state machines), systems (orchestrators), codebases (docs/linters/standards). Same pattern, different scale."
+      },
+      "created": "2026-04-11",
+      "updated": "2026-04-11"
+    },
+    "he_xp_as_harness": {
+      "id": "he_xp_as_harness",
+      "alias": "HE",
+      "type": "concept",
+      "label": "XP as Harness Engineering",
+      "parent": "art_harness_eng",
+      "tags": [
+        "XP",
+        "TDD",
+        "CI",
+        "refactoring",
+        "pairing"
+      ],
+      "attrs": {
+        "description": "Every XP practice is a harness-construction technique: TDD, small releases, CI, refactoring, pair programming, collective ownership, coding standards. Named by Kent Beck in 1999, unnamed as meta-pattern until now."
+      },
+      "created": "2026-04-11",
+      "updated": "2026-04-11"
+    },
+    "he_ai_agents_harness": {
+      "id": "he_ai_agents_harness",
+      "alias": "HE",
+      "type": "concept",
+      "label": "AI Agents Need Harnesses",
+      "parent": "art_harness_eng",
+      "tags": [
+        "AI",
+        "agents",
+        "coding",
+        "environment"
+      ],
+      "attrs": {
+        "description": "AI agents need XP properties to function. Without them, every session starts from scratch. The cost of not doing XP moved from organizational to personal. Fix the environment not the prompt. Prompt fixes dont compound, environment fixes do."
+      },
+      "created": "2026-04-11",
+      "updated": "2026-04-11"
+    },
+    "he_minimum_viable_harness": {
+      "id": "he_minimum_viable_harness",
+      "alias": "HE",
+      "type": "concept",
+      "label": "Minimum Viable Harness",
+      "parent": "art_harness_eng",
+      "tags": [
+        "MVH",
+        "boundaries",
+        "entry",
+        "exit"
+      ],
+      "attrs": {
+        "description": "One entry, one exit, clear boundaries. Non-determinism inside, stable interface outside. Start with one boundary — one process that requires memory. Make it leave the system ready for next run."
+      },
+      "created": "2026-04-11",
+      "updated": "2026-04-11"
+    },
+    "he_human_role": {
+      "id": "he_human_role",
+      "alias": "HE",
+      "type": "concept",
+      "label": "Where Humans Stay",
+      "parent": "art_harness_eng",
+      "tags": [
+        "human-in-loop",
+        "steering",
+        "evaluation"
+      ],
+      "attrs": {
+        "description": "Humans between iterations not inside loops. Three roles: Steer (set goals), Evaluate (quality judgment at boundary), Improve the harness (meta-work that compounds). If you carry state between iterations, you reintroduced ad hoc."
+      },
+      "created": "2026-04-11",
+      "updated": "2026-04-11"
+    },
+    "he_brownfield_greenfield": {
+      "id": "he_brownfield_greenfield",
+      "alias": "HE",
+      "type": "concept",
+      "label": "Brownfield vs Greenfield",
+      "parent": "art_harness_eng",
+      "tags": [
+        "strangler-fig",
+        "legacy",
+        "adoption"
+      ],
+      "attrs": {
+        "description": "Brownfield: use Strangler Fig pattern. Build small loop beside ad hoc system, gradually route more. Never big-bang. Greenfield: start AI-first, build boundaries from day one."
+      },
+      "created": "2026-04-11",
+      "updated": "2026-04-11"
+    },
+    "he_pdca": {
+      "id": "he_pdca",
+      "alias": "HE",
+      "type": "concept",
+      "label": "PDCA / Deming Cycle",
+      "parent": "he_ad_hoc_vs_loop",
+      "tags": [
+        "Deming",
+        "PDCA",
+        "continuous-improvement"
+      ],
+      "attrs": {
+        "description": "Plan-Do-Check-Act described in 1950s. Toyota built empire on it. Harness is the unnamed infrastructure that makes PDCA actually work."
+      },
+      "created": "2026-04-11",
+      "updated": "2026-04-11"
+    },
+    "he_improvement_in_loop": {
+      "id": "he_improvement_in_loop",
+      "alias": "HE",
+      "type": "concept",
+      "label": "Improvement as Part of the Loop",
+      "parent": "he_minimum_viable_harness",
+      "tags": [
+        "feedback",
+        "improvement",
+        "signals"
+      ],
+      "attrs": {
+        "description": "Dont treat improvement as separate phase. Make every iteration generate info about its own performance. Divergences are signals pointing at where to tighten boundaries next."
+      },
+      "created": "2026-04-11",
+      "updated": "2026-04-11"
+    },
+    "he_espresso_analogy": {
+      "id": "he_espresso_analogy",
+      "alias": "HE",
+      "type": "concept",
+      "label": "Espresso Machine Analogy",
+      "parent": "he_minimum_viable_harness",
+      "tags": [
+        "analogy",
+        "readiness",
+        "setup-cost"
+      ],
+      "attrs": {
+        "description": "Clean-after vs clean-before. Clean-after = system always ready for next person = optimize for next iterations time to value. Readiness is emotionally lighter. Near-zero start cost."
+      },
+      "created": "2026-04-11",
+      "updated": "2026-04-11"
+    },
+    "he_compounding": {
+      "id": "he_compounding",
+      "alias": "HE",
+      "type": "concept",
+      "label": "Loops Compound, Ad Hoc Doesnt",
+      "parent": "he_ad_hoc_vs_loop",
+      "tags": [
+        "compounding",
+        "cost",
+        "iteration"
+      ],
+      "attrs": {
+        "description": "Ad hoc process costs the same forever. A loop costs less every iteration. Thats compounding. Environment fixes compound, prompt fixes dont."
+      },
+      "created": "2026-04-11",
+      "updated": "2026-04-11"
+    },
+    "henrique_bastos": {
+      "id": "henrique_bastos",
+      "alias": "HE",
+      "type": "human",
+      "label": "Henrique Bastos",
+      "parent": null,
+      "tags": [
+        "author",
+        "developer",
+        "XP",
+        "harness-engineering"
+      ],
+      "attrs": {
+        "role": "Author, developer, XP practitioner",
+        "source": "LinkedIn article"
+      },
+      "created": "2026-04-11",
+      "updated": "2026-04-11"
+    },
+    "kent_beck": {
+      "id": "kent_beck",
+      "alias": "KE",
+      "type": "human",
+      "label": "Kent Beck",
+      "parent": null,
+      "tags": [
+        "XP",
+        "TDD",
+        "agile"
+      ],
+      "attrs": {
+        "role": "Creator of Extreme Programming, published XP Explained in 1999"
+      },
+      "created": "2026-04-11",
+      "updated": "2026-04-11"
+    },
+    "w_edwards_deming": {
+      "id": "w_edwards_deming",
+      "alias": "W_",
+      "type": "human",
+      "label": "W. Edwards Deming",
+      "parent": null,
+      "tags": [
+        "PDCA",
+        "quality",
+        "manufacturing"
+      ],
+      "attrs": {
+        "role": "Quality management pioneer, described PDCA cycle in 1950s"
+      },
+      "created": "2026-04-11",
+      "updated": "2026-04-11"
+    },
+    "evt_xp_explained_1999": {
+      "id": "evt_xp_explained_1999",
+      "alias": "EV",
+      "type": "event",
+      "label": "XP Explained Published",
+      "parent": "he_xp_as_harness",
+      "tags": [
+        "book",
+        "XP",
+        "1999"
+      ],
+      "attrs": {
+        "date": "1999",
+        "details": "Kent Beck published Extreme Programming Explained. Every practice is a harness-construction technique."
+      },
+      "created": "2026-04-11",
+      "updated": "2026-04-11"
+    },
+    "wahoo_kickr": {
+      "id": "wahoo_kickr",
+      "alias": "WA",
+      "type": "device",
+      "label": "Wahoo Kickr",
+      "parent": null,
+      "tags": [
+        "home-trainer",
+        "direct-drive",
+        "cycling",
+        "zwift",
+        "vélo"
+      ],
+      "attrs": {
+        "type": "Direct drive smart trainer",
+        "precision": "±1-2%",
+        "usage": "Zwift indoor cycling",
+        "owner": "Damien"
+      },
+      "created": "2026-04-12",
+      "updated": "2026-04-12"
+    },
+    "velo_gravel": {
+      "id": "velo_gravel",
+      "alias": "VE",
+      "type": "device",
+      "label": "Vélo Gravel",
+      "parent": null,
+      "tags": [
+        "gravel",
+        "vélo",
+        "cycling",
+        "route"
+      ],
+      "attrs": {
+        "type": "Gravel bike",
+        "powermeter": "non",
+        "owner": "Damien"
+      },
+      "created": "2026-04-12",
+      "updated": "2026-04-12"
+    },
+    "zwift": {
+      "id": "zwift",
+      "alias": "ZW",
+      "type": "service",
+      "label": "Zwift",
+      "parent": null,
+      "tags": [
+        "cycling",
+        "indoor",
+        "training",
+        "vélo"
+      ],
+      "attrs": {
+        "type": "Indoor cycling platform"
+      },
+      "created": "2026-04-12",
+      "updated": "2026-04-12"
+    },
+    "strava": {
+      "id": "strava",
+      "alias": "ST",
+      "type": "service",
+      "label": "Strava",
+      "parent": null,
+      "tags": [
+        "cycling",
+        "sport",
+        "tracking",
+        "GPS"
+      ],
+      "attrs": {
+        "type": "Sport tracking platform",
+        "api_integrated": true
+      },
+      "created": "2026-04-12",
+      "updated": "2026-04-12"
+    },
+    "opendataloader_pdf": {
+      "id": "opendataloader_pdf",
+      "alias": "OP",
+      "type": "product",
+      "label": "OpenDataLoader PDF",
+      "parent": null,
+      "tags": [
+        "pdf",
+        "markdown",
+        "parsing",
+        "ocr",
+        "rag",
+        "open-source",
+        "ai",
+        "data-extraction"
+      ],
+      "attrs": {
+        "url": "https://github.com/opendataloader-project/opendataloader-pdf",
+        "license": "Apache-2.0",
+        "languages": "Python,Node.js,Java",
+        "benchmark_score": "0.907 overall (#1)",
+        "table_accuracy": "0.928",
+        "speed": "100 pages/sec (local mode)",
+        "description": "Open-source PDF parser: extracts Markdown, JSON (with bounding boxes), HTML. Deterministic local mode + AI hybrid mode. Built-in OCR 80+ languages. No GPU required.",
+        "source_post": "https://www.linkedin.com/posts/charlywargnier_icymi-extracting-data-from-pdfs-just-share-7449011679616651264"
+      },
+      "created": "2026-04-12",
+      "updated": "2026-04-12"
+    },
+    "odl_local_mode": {
+      "id": "odl_local_mode",
+      "alias": "OD",
+      "type": "concept",
+      "label": "Local Deterministic Mode",
+      "parent": "opendataloader_pdf",
+      "tags": [],
+      "attrs": {
+        "description": "Fast CPU-only parsing with XY-Cut++ reading order, bounding boxes, heading detection, table extraction"
+      },
+      "created": "2026-04-12",
+      "updated": "2026-04-12"
+    },
+    "odl_hybrid_mode": {
+      "id": "odl_hybrid_mode",
+      "alias": "OD",
+      "type": "concept",
+      "label": "Hybrid AI Mode",
+      "parent": "opendataloader_pdf",
+      "tags": [],
+      "attrs": {
+        "description": "Routes complex pages to AI backend for OCR, complex tables, LaTeX formulas, chart descriptions. #1 in benchmarks."
+      },
+      "created": "2026-04-12",
+      "updated": "2026-04-12"
+    },
+    "odl_accessibility": {
+      "id": "odl_accessibility",
+      "alias": "OD",
+      "type": "concept",
+      "label": "PDF Accessibility Auto-tagging",
+      "parent": "opendataloader_pdf",
+      "tags": [],
+      "attrs": {
+        "description": "Auto-tag untagged PDFs into Tagged PDFs. Built with PDF Association & veraPDF. Free Q2 2026, PDF/UA export = enterprise.",
+        "status": "coming Q2 2026"
+      },
+      "created": "2026-04-12",
+      "updated": "2026-04-12"
+    },
+    "charly_wargnier": {
+      "id": "charly_wargnier",
+      "alias": "CH",
+      "type": "human",
+      "label": "Charly Wargnier",
+      "parent": null,
+      "tags": [
+        "linkedin",
+        "freelance",
+        "ai"
+      ],
+      "attrs": {
+        "role": "Freelance / AI content creator",
+        "linkedin": "charlywargnier",
+        "followers": "50K"
+      },
+      "created": "2026-04-12",
+      "updated": "2026-04-12"
+    },
+    "dual_lab": {
+      "id": "dual_lab",
+      "alias": "DU",
+      "type": "org",
+      "label": "Dual Lab",
+      "parent": null,
+      "tags": [],
+      "attrs": {
+        "role": "veraPDF developers, collaboration partner for OpenDataLoader accessibility"
+      },
+      "created": "2026-04-12",
+      "updated": "2026-04-12"
+    },
+    "pdf_association": {
+      "id": "pdf_association",
+      "alias": "PD",
+      "type": "org",
+      "label": "PDF Association",
+      "parent": null,
+      "tags": [],
+      "attrs": {
+        "role": "Standards body for PDF specifications, Well-Tagged PDF spec"
+      },
+      "created": "2026-04-12",
+      "updated": "2026-04-12"
+    },
+    "christine-jeanmarie": {
+      "id": "christine-jeanmarie",
+      "alias": "CH",
+      "type": "human",
+      "label": "Christine et Jean-Marie",
+      "parent": null,
+      "tags": [
+        "famille",
+        "garches"
+      ],
+      "attrs": {
+        "relation": "famille (probablement parents ou famille proche)",
+        "location": "Garches (92)"
+      },
+      "created": "2026-04-13",
+      "updated": "2026-04-13"
+    },
+    "weekend-paris-25avr": {
+      "id": "weekend-paris-25avr",
+      "alias": "WE",
+      "type": "event",
+      "label": "Week-end à Paris (25 avril 2026)",
+      "parent": null,
+      "tags": [
+        "paris",
+        "weekend",
+        "famille",
+        "avril2026"
+      ],
+      "attrs": {
+        "date": "2026-04-25",
+        "hebergement": "Garches, chez Christine et Jean-Marie",
+        "chambres": "2 chambres grand lit + 1 chambre lit simple",
+        "participants": "Famille Metzler"
+      },
+      "created": "2026-04-13",
+      "updated": "2026-04-13"
+    },
+    "bernard-metzler": {
+      "id": "bernard-metzler",
+      "alias": "BE",
+      "type": "human",
+      "label": "Bernard Metzler",
+      "parent": null,
+      "tags": [
+        "famille",
+        "papa",
+        "bernard"
+      ],
+      "attrs": {
+        "relation": "Père de Damien",
+        "dateNaissance": "1944-04-14",
+        "anniversaire": "14 avril"
+      },
+      "created": "2026-04-13",
+      "updated": "2026-04-13"
+    },
+    "soeur-damien": {
+      "id": "soeur-damien",
+      "alias": "SO",
+      "type": "human",
+      "label": "Sœur de Damien",
+      "parent": null,
+      "tags": [
+        "famille",
+        "soeur"
+      ],
+      "attrs": {
+        "relation": "Sœur de Damien",
+        "dateNaissance": "1974-04-18",
+        "anniversaire": "18 avril"
+      },
+      "created": "2026-04-13",
+      "updated": "2026-04-13"
+    },
+    "helene-metzler": {
+      "id": "helene-metzler",
+      "alias": "HE",
+      "type": "human",
+      "label": "Hélène Metzler",
+      "parent": null,
+      "tags": [
+        "famille",
+        "soeur",
+        "helene"
+      ],
+      "attrs": {
+        "relation": "Sœur de Damien",
+        "dateNaissance": "1974-04-18",
+        "anniversaire": "18 avril"
+      },
+      "created": "2026-04-13",
+      "updated": "2026-04-13"
+    },
+    "donovan_kidd": {
+      "id": "donovan_kidd",
+      "alias": "DO",
+      "type": "human",
+      "label": "Donovan Kidd",
+      "parent": null,
+      "tags": [
+        "hyland",
+        "openbao"
+      ],
+      "attrs": {
+        "context": "Hyland colleague, contact for OpenBAO info"
+      },
+      "created": "2026-04-13",
+      "updated": "2026-04-13"
+    },
+    "article_graph_rag_3tier": {
+      "id": "article_graph_rag_3tier",
+      "alias": "AR",
+      "type": "knowledge",
+      "label": "Beyond Vector Search: 3-Tiered Graph-RAG System",
+      "parent": null,
+      "tags": [
+        "graph-rag",
+        "rag",
+        "knowledge-graph",
+        "vector-search",
+        "deterministic",
+        "llm",
+        "retrieval"
+      ],
+      "attrs": {
+        "url": "https://machinelearningmastery.com/beyond-vector-search-building-a-deterministic-3-tiered-graph-rag-system/",
+        "source": "Machine Learning Mastery",
+        "date": "2026-04",
+        "summary": "Architecture for deterministic RAG using 3-tier retrieval: QuadStore knowledge graph (atomic facts) + statistical graph + ChromaDB vector DB, with prompt-enforced conflict resolution instead of algorithmic routing."
+      },
+      "created": "2026-04-13",
+      "updated": "2026-04-13"
+    },
+    "concept_graph_rag": {
+      "id": "concept_graph_rag",
+      "alias": "CO",
+      "type": "concept",
+      "label": "Graph-RAG",
+      "parent": "article_graph_rag_3tier",
+      "tags": [
+        "graph-rag",
+        "rag",
+        "knowledge-graph"
+      ],
+      "attrs": {
+        "description": "RAG architecture that uses knowledge graphs for structured fact retrieval alongside vector databases for semantic search."
+      },
+      "created": "2026-04-13",
+      "updated": "2026-04-13"
+    },
+    "concept_tiered_retrieval": {
+      "id": "concept_tiered_retrieval",
+      "alias": "CO",
+      "type": "concept",
+      "label": "3-Tiered Retrieval Hierarchy",
+      "parent": "article_graph_rag_3tier",
+      "tags": [
+        "retrieval",
+        "priority",
+        "deterministic"
+      ],
+      "attrs": {
+        "description": "Priority 1: absolute graph facts (QuadStore SPOC), Priority 2: statistical/historical graph data, Priority 3: vector documents (ChromaDB). Higher priority overrides lower on conflicts."
+      },
+      "created": "2026-04-13",
+      "updated": "2026-04-13"
+    },
+    "concept_prompt_fusion": {
+      "id": "concept_prompt_fusion",
+      "alias": "CO",
+      "type": "concept",
+      "label": "Prompt-Enforced Conflict Resolution",
+      "parent": "article_graph_rag_3tier",
+      "tags": [
+        "prompt-engineering",
+        "conflict-resolution",
+        "deterministic"
+      ],
+      "attrs": {
+        "description": "Instead of algorithmic routing (like RRF), dump all retrieval results into context with labeled priority blocks and let the LM deterministically resolve conflicts via explicit rules in the system prompt."
+      },
+      "created": "2026-04-13",
+      "updated": "2026-04-13"
+    },
+    "concept_quadstore": {
+      "id": "concept_quadstore",
+      "alias": "CO",
+      "type": "concept",
+      "label": "QuadStore (SPOC)",
+      "parent": "concept_graph_rag",
+      "tags": [
+        "quadstore",
+        "knowledge-graph",
+        "spoc",
+        "in-memory"
+      ],
+      "attrs": {
+        "description": "Lightweight in-memory knowledge graph using Subject-Predicate-Object-Context format. String-to-integer mapping + 4-way index (spoc/pocs/ocsp/cspo) for constant-time lookups. Simple API: add() and query().",
+        "repo": "https://github.com/mmmayo13/quadstore"
+      },
+      "created": "2026-04-13",
+      "updated": "2026-04-13"
+    },
+    "concept_vector_fallback": {
+      "id": "concept_vector_fallback",
+      "alias": "CO",
+      "type": "concept",
+      "label": "Vector DB Fallback (ChromaDB)",
+      "parent": "concept_tiered_retrieval",
+      "tags": [
+        "chromadb",
+        "vector-database",
+        "embeddings",
+        "fallback"
+      ],
+      "attrs": {
+        "description": "ChromaDB used as Priority 3 fallback for long-tail fuzzy context when knowledge graphs lack the answer."
+      },
+      "created": "2026-04-13",
+      "updated": "2026-04-13"
+    },
+    "concept_ner_bridge": {
+      "id": "concept_ner_bridge",
+      "alias": "CO",
+      "type": "concept",
+      "label": "NER Entity Extraction Bridge",
+      "parent": "concept_graph_rag",
+      "tags": [
+        "spacy",
+        "ner",
+        "entity-extraction"
+      ],
+      "attrs": {
+        "description": "spaCy NER extracts entities from user prompts to bridge between graph (strict lookup) and vector (semantic similarity) queries."
+      },
+      "created": "2026-04-13",
+      "updated": "2026-04-13"
+    },
+    "project_rag_quadstore": {
+      "id": "project_rag_quadstore",
+      "alias": "PR",
+      "type": "project",
+      "label": "rag_facts_quadstore",
+      "parent": "concept_graph_rag",
+      "tags": [
+        "github",
+        "demo",
+        "implementation"
+      ],
+      "attrs": {
+        "repo": "https://github.com/mmmayo13/rag_facts_quadstore",
+        "stack": "Python, QuadStore, ChromaDB, spaCy, Ollama, llama3.2"
+      },
+      "created": "2026-04-13",
+      "updated": "2026-04-13"
+    },
+    "rdv_sommeil_mai2026": {
+      "id": "rdv_sommeil_mai2026",
+      "alias": "RD",
+      "type": "event",
+      "label": "RDV Médecine du Sommeil",
+      "parent": null,
+      "tags": [
+        "sommeil",
+        "apnée",
+        "médecin",
+        "steenvoorde"
+      ],
+      "attrs": {
+        "date_pose": "2026-05-12 07:00",
+        "date_retrait": "2026-05-13 08:30",
+        "lieu": "Cabinet médical, 20 avenue de la Bergerie, Steenvoorde",
+        "type": "polygraphie/polysomnographie",
+        "status": "planifié"
+      },
+      "created": "2026-04-13",
+      "updated": "2026-04-13"
+    },
+    "cabinet_steenvoorde": {
+      "id": "cabinet_steenvoorde",
+      "alias": "CA",
+      "type": "place",
+      "label": "Cabinet Médical Steenvoorde",
+      "parent": null,
+      "tags": [
+        "médecin",
+        "steenvoorde",
+        "sommeil"
+      ],
+      "attrs": {
+        "adresse": "20 avenue de la Bergerie, Steenvoorde"
+      },
+      "created": "2026-04-13",
+      "updated": "2026-04-13"
+    },
+    "project_parakeet_n150": {
+      "id": "project_parakeet_n150",
+      "alias": "PR",
+      "type": "project",
+      "label": "Parakeet STT on N150",
+      "parent": null,
+      "tags": [
+        "parakeet",
+        "stt",
+        "speech-to-text",
+        "onnx",
+        "nvidia",
+        "nemo",
+        "n150",
+        "cpu-inference"
+      ],
+      "attrs": {
+        "goal": "Run Nvidia Parakeet TDT 0.6B on Intel N150 via ONNX Runtime CPU",
+        "model": "nvidia/parakeet-tdt-0.6b-v2",
+        "status": "planned",
+        "path": "projects/parakeet-n150/"
+      },
+      "created": "2026-04-14",
+      "updated": "2026-04-14"
+    }
+  },
+  "edges": [
+    {
+      "from": "damien",
+      "to": "hyland",
+      "label": "works_at"
+    },
+    {
+      "from": "damien",
+      "to": "automat-it",
+      "label": "worked_at"
+    },
+    {
+      "from": "damien",
+      "to": "aws",
+      "label": "worked_at"
+    },
+    {
+      "from": "damien",
+      "to": "nuxeo",
+      "label": "worked_at"
+    },
+    {
+      "from": "damien",
+      "to": "leroy-merlin",
+      "label": "worked_at"
+    },
+    {
+      "from": "damien",
+      "to": "altran",
+      "label": "worked_at"
+    },
+    {
+      "from": "damien",
+      "to": "isen",
+      "label": "taught_at"
+    },
+    {
+      "from": "damien",
+      "to": "icam",
+      "label": "studied_at"
+    },
+    {
+      "from": "damien",
+      "to": "certifications",
+      "label": "holds"
+    },
+    {
+      "from": "damien",
+      "to": "openclaw-server",
+      "label": "owns"
+    },
+    {
+      "from": "damien",
+      "to": "azure-rampup",
+      "label": "plans"
+    },
+    {
+      "from": "damien",
+      "to": "whatsapp-setup",
+      "label": "plans"
+    },
+    {
+      "from": "nuxeo",
+      "to": "hyland",
+      "label": "acquired_by"
+    },
+    {
+      "from": "automat-it",
+      "to": "aws",
+      "label": "partner_of"
+    },
+    {
+      "from": "titouan",
+      "to": "ecoledirecte",
+      "label": "uses"
+    },
+    {
+      "from": "cyril",
+      "to": "ecoledirecte",
+      "label": "uses"
+    },
+    {
+      "from": "openclaw-server",
+      "to": "whatsapp-setup",
+      "label": "will_host"
+    },
+    {
+      "from": "edouard_viot",
+      "to": "symbiotic",
+      "rel": "member_of",
+      "attrs": {},
+      "created": "2026-04-01"
+    },
+    {
+      "from": "damien",
+      "to": "edouard_viot",
+      "rel": "knows",
+      "attrs": {},
+      "created": "2026-04-01"
+    },
+    {
+      "from": "damien",
+      "to": "aws_summit_paris_2026",
+      "rel": "related_to",
+      "attrs": {},
+      "created": "2026-04-01"
+    },
+    {
+      "from": "damien",
+      "to": "yecine_allouache",
+      "rel": "knows",
+      "attrs": {},
+      "created": "2026-04-01"
+    },
+    {
+      "from": "damien",
+      "to": "cfs",
+      "rel": "related_to",
+      "attrs": {},
+      "created": "2026-04-01"
+    },
+    {
+      "from": "damien",
+      "to": "gitguardian",
+      "rel": "related_to",
+      "attrs": {},
+      "created": "2026-04-01"
+    },
+    {
+      "from": "fluidstack",
+      "to": "mistral_ai",
+      "rel": "related_to",
+      "attrs": {},
+      "created": "2026-04-01"
+    },
+    {
+      "from": "campus_ia_mgx",
+      "to": "mistral_ai",
+      "rel": "related_to",
+      "attrs": {},
+      "created": "2026-04-01"
+    },
+    {
+      "from": "data4",
+      "to": "mech_post_arenh",
+      "rel": "depends_on",
+      "attrs": {},
+      "created": "2026-04-01"
+    },
+    {
+      "from": "scaleway_niel",
+      "to": "domain_ai_infra_france",
+      "rel": "part_of",
+      "attrs": {},
+      "created": "2026-04-01"
+    },
+    {
+      "from": "mistral_ai",
+      "to": "mech_levy_ratchet",
+      "rel": "related_to",
+      "attrs": {},
+      "created": "2026-04-01"
+    },
+    {
+      "from": "paris_ai_summit_2025",
+      "to": "domain_summit_accountability",
+      "rel": "related_to",
+      "attrs": {},
+      "created": "2026-04-01"
+    },
+    {
+      "from": "julien_simon",
+      "to": "kings_new_datacenters",
+      "rel": "related_to",
+      "attrs": {},
+      "created": "2026-04-01"
+    },
+    {
+      "from": "damien",
+      "to": "kings_new_datacenters",
+      "rel": "related_to",
+      "attrs": {},
+      "created": "2026-04-01"
+    },
+    {
+      "from": "kings_new_datacenters",
+      "to": "paris_ai_summit_2025",
+      "rel": "related_to",
+      "attrs": {},
+      "created": "2026-04-01"
+    },
+    {
+      "from": "tugdual_grall",
+      "to": "github",
+      "rel": "member_of",
+      "attrs": {},
+      "created": "2026-04-01"
+    },
+    {
+      "from": "xavier_noya",
+      "to": "betclic",
+      "rel": "member_of",
+      "attrs": {},
+      "created": "2026-04-01"
+    },
+    {
+      "from": "damien",
+      "to": "tugdual_grall",
+      "rel": "knows",
+      "attrs": {},
+      "created": "2026-04-01"
+    },
+    {
+      "from": "aws_summit_paris_2026",
+      "to": "github",
+      "rel": "related_to",
+      "attrs": {},
+      "created": "2026-04-01"
+    },
+    {
+      "from": "aws_summit_paris_2026",
+      "to": "betclic",
+      "rel": "related_to",
+      "attrs": {},
+      "created": "2026-04-01"
+    },
+    {
+      "from": "damien",
+      "to": "fred_visticot",
+      "rel": "knows",
+      "attrs": {},
+      "created": "2026-04-01"
+    },
+    {
+      "from": "fred_visticot",
+      "to": "momentum_project",
+      "rel": "owns",
+      "attrs": {},
+      "created": "2026-04-01"
+    },
+    {
+      "from": "damien",
+      "to": "lam_villeneuve_ascq",
+      "rel": "located_in",
+      "attrs": {},
+      "created": "2026-04-05"
+    },
+    {
+      "from": "damien",
+      "to": "visite_lam_kandinsky_20260404",
+      "rel": "related_to",
+      "attrs": {},
+      "created": "2026-04-05"
+    },
+    {
+      "from": "visite_lam_kandinsky_20260404",
+      "to": "wassily_kandinsky",
+      "rel": "related_to",
+      "attrs": {},
+      "created": "2026-04-05"
+    },
+    {
+      "from": "damien",
+      "to": "wassily_kandinsky",
+      "rel": "likes",
+      "attrs": {},
+      "created": "2026-04-05"
+    },
+    {
+      "from": "damien",
+      "to": "apel",
+      "rel": "manages",
+      "attrs": {},
+      "created": "2026-04-08"
+    },
+    {
+      "from": "apel",
+      "to": "saint-jacques-hazebrouck",
+      "rel": "related_to",
+      "attrs": {},
+      "created": "2026-04-08"
+    },
+    {
+      "from": "cyril",
+      "to": "saint-jacques-hazebrouck",
+      "rel": "member_of",
+      "attrs": {},
+      "created": "2026-04-08"
+    },
+    {
+      "from": "loic-fournier",
+      "to": "bedrock-iam-cost-allocation",
+      "rel": "created",
+      "attrs": {},
+      "created": "2026-04-10"
+    },
+    {
+      "from": "bedrock-iam-cost-allocation",
+      "to": "aws",
+      "rel": "part_of",
+      "attrs": {},
+      "created": "2026-04-10"
+    },
+    {
+      "from": "patrick-szymkowiak",
+      "to": "rtk-ai-labs",
+      "rel": "manages",
+      "attrs": {},
+      "created": "2026-04-10"
+    },
+    {
+      "from": "rtk-ai-labs",
+      "to": "rtk-token-compression",
+      "rel": "created",
+      "attrs": {},
+      "created": "2026-04-10"
+    },
+    {
+      "from": "thomas-dohmke",
+      "to": "entire-io-company",
+      "rel": "created",
+      "attrs": {},
+      "created": "2026-04-10"
+    },
+    {
+      "from": "nicolas-martignole",
+      "to": "entire-io",
+      "rel": "related_to",
+      "attrs": {},
+      "created": "2026-04-10"
+    },
+    {
+      "from": "andrej-karpathy",
+      "to": "karpathy-llm-wiki",
+      "rel": "created",
+      "attrs": {},
+      "created": "2026-04-10"
+    },
+    {
+      "from": "rohit-ghumare",
+      "to": "karpathy-llm-wiki",
+      "rel": "related_to",
+      "attrs": {},
+      "created": "2026-04-10"
+    },
+    {
+      "from": "llm-wiki-data-layer",
+      "to": "karpathy-llm-wiki",
+      "rel": "depends_on",
+      "attrs": {},
+      "created": "2026-04-10"
+    },
+    {
+      "from": "henrique_bastos",
+      "to": "art_harness_eng",
+      "rel": "created",
+      "attrs": {},
+      "created": "2026-04-11"
+    },
+    {
+      "from": "kent_beck",
+      "to": "he_xp_as_harness",
+      "rel": "created",
+      "attrs": {},
+      "created": "2026-04-11"
+    },
+    {
+      "from": "w_edwards_deming",
+      "to": "he_pdca",
+      "rel": "created",
+      "attrs": {},
+      "created": "2026-04-11"
+    },
+    {
+      "from": "he_xp_as_harness",
+      "to": "he_ai_agents_harness",
+      "rel": "related_to",
+      "attrs": {},
+      "created": "2026-04-11"
+    },
+    {
+      "from": "he_ad_hoc_vs_loop",
+      "to": "he_harness_fractal",
+      "rel": "related_to",
+      "attrs": {},
+      "created": "2026-04-11"
+    },
+    {
+      "from": "he_minimum_viable_harness",
+      "to": "he_brownfield_greenfield",
+      "rel": "related_to",
+      "attrs": {},
+      "created": "2026-04-11"
+    },
+    {
+      "from": "he_human_role",
+      "to": "he_ai_agents_harness",
+      "rel": "related_to",
+      "attrs": {},
+      "created": "2026-04-11"
+    },
+    {
+      "from": "he_compounding",
+      "to": "he_improvement_in_loop",
+      "rel": "related_to",
+      "attrs": {},
+      "created": "2026-04-11"
+    },
+    {
+      "from": "evt_xp_explained_1999",
+      "to": "kent_beck",
+      "rel": "related_to",
+      "attrs": {},
+      "created": "2026-04-11"
+    },
+    {
+      "from": "he_espresso_analogy",
+      "to": "he_compounding",
+      "rel": "related_to",
+      "attrs": {},
+      "created": "2026-04-11"
+    },
+    {
+      "from": "damien",
+      "to": "wahoo_kickr",
+      "rel": "owns",
+      "attrs": {},
+      "created": "2026-04-12"
+    },
+    {
+      "from": "damien",
+      "to": "velo_gravel",
+      "rel": "owns",
+      "attrs": {},
+      "created": "2026-04-12"
+    },
+    {
+      "from": "damien",
+      "to": "zwift",
+      "rel": "uses",
+      "attrs": {},
+      "created": "2026-04-12"
+    },
+    {
+      "from": "damien",
+      "to": "strava",
+      "rel": "uses",
+      "attrs": {},
+      "created": "2026-04-12"
+    },
+    {
+      "from": "wahoo_kickr",
+      "to": "zwift",
+      "rel": "connected",
+      "attrs": {},
+      "created": "2026-04-12"
+    },
+    {
+      "from": "velo_gravel",
+      "to": "strava",
+      "rel": "connected",
+      "attrs": {},
+      "created": "2026-04-12"
+    },
+    {
+      "from": "charly_wargnier",
+      "to": "opendataloader_pdf",
+      "rel": "related_to",
+      "attrs": {},
+      "created": "2026-04-12"
+    },
+    {
+      "from": "opendataloader_pdf",
+      "to": "dual_lab",
+      "rel": "depends_on",
+      "attrs": {},
+      "created": "2026-04-12"
+    },
+    {
+      "from": "opendataloader_pdf",
+      "to": "pdf_association",
+      "rel": "depends_on",
+      "attrs": {},
+      "created": "2026-04-12"
+    },
+    {
+      "from": "damien",
+      "to": "christine-jeanmarie",
+      "rel": "knows",
+      "attrs": {},
+      "created": "2026-04-13"
+    },
+    {
+      "from": "weekend-paris-25avr",
+      "to": "christine-jeanmarie",
+      "rel": "related_to",
+      "attrs": {},
+      "created": "2026-04-13"
+    },
+    {
+      "from": "damien",
+      "to": "bernard-metzler",
+      "rel": "knows",
+      "attrs": {},
+      "created": "2026-04-13"
+    },
+    {
+      "from": "damien",
+      "to": "soeur-damien",
+      "rel": "knows",
+      "attrs": {},
+      "created": "2026-04-13"
+    },
+    {
+      "from": "damien",
+      "to": "helene-metzler",
+      "rel": "knows",
+      "attrs": {},
+      "created": "2026-04-13"
+    },
+    {
+      "from": "donovan_kidd",
+      "to": "hyland",
+      "rel": "member_of",
+      "attrs": {},
+      "created": "2026-04-13"
+    },
+    {
+      "from": "concept_graph_rag",
+      "to": "concept_tiered_retrieval",
+      "rel": "uses",
+      "attrs": {},
+      "created": "2026-04-13"
+    },
+    {
+      "from": "concept_tiered_retrieval",
+      "to": "concept_prompt_fusion",
+      "rel": "depends_on",
+      "attrs": {},
+      "created": "2026-04-13"
+    },
+    {
+      "from": "concept_quadstore",
+      "to": "concept_tiered_retrieval",
+      "rel": "part_of",
+      "attrs": {},
+      "created": "2026-04-13"
+    },
+    {
+      "from": "concept_vector_fallback",
+      "to": "concept_tiered_retrieval",
+      "rel": "part_of",
+      "attrs": {},
+      "created": "2026-04-13"
+    },
+    {
+      "from": "concept_ner_bridge",
+      "to": "concept_quadstore",
+      "rel": "related_to",
+      "attrs": {},
+      "created": "2026-04-13"
+    },
+    {
+      "from": "project_rag_quadstore",
+      "to": "concept_graph_rag",
+      "rel": "instance_of",
+      "attrs": {},
+      "created": "2026-04-13"
+    },
+    {
+      "from": "rdv_sommeil_mai2026",
+      "to": "cabinet_steenvoorde",
+      "rel": "located_in",
+      "attrs": {},
+      "created": "2026-04-13"
+    }
+  ],
+  "categories": {
+    "people": {
+      "label": "People",
+      "icon": "👤"
+    },
+    "work": {
+      "label": "Work",
+      "icon": "💼"
+    },
+    "infra": {
+      "label": "Infrastructure",
+      "icon": "🖥️"
+    },
+    "family": {
+      "label": "Family",
+      "icon": "👨‍👩‍👧‍👦"
+    },
+    "education": {
+      "label": "Education",
+      "icon": "🎓"
+    },
+    "cloud": [
+      "kings_new_datacenters"
+    ],
+    "Cloud & Infrastructure": [
+      "bedrock-iam-cost-allocation"
+    ],
+    "AI & DevTools": [
+      "rtk-token-compression",
+      "entire-io",
+      "karpathy-llm-wiki",
+      "agent-reach",
+      "llm-wiki-data-layer"
+    ]
+  }
+}
