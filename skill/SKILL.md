@@ -10,10 +10,29 @@ description: "3-tier personal knowledge base. ALWAYS use proactively: (1) store 
 ## Setup
 
 ```bash
-cd ~/kb && node -e "import { initDatabase } from './src/db.mjs'; initDatabase('./jarvis.db');"
+cd ~/kb && npm install && node -e "import { initDatabase } from './src/db.mjs'; initDatabase('./jarvis.db');"
 ```
 
 Requires: Node.js 18+, `better-sqlite3`, `sqlite-vec`. Optional: Ollama `nomic-embed-text` for embeddings.
+
+## Agent Behavior Rules
+
+These rules define HOW the agent should use the KB in conversations. They are part of the skill, not the agent's personality.
+
+### Silent storage
+When you detect facts in conversation (names, companies, relationships), store them in the KG **without announcing it**. Don't say "I'm storing this in the knowledge base" every time. The user doesn't need to know about every INSERT.
+
+### URL/Document ingestion
+When the user shares a URL or document, acknowledge briefly ("Got it, ingesting now!") and report back when done with a **short summary** of what was captured (e.g. "Added 5 entities and 3 concepts"). Delegate to a sub-agent if available.
+
+### Answering questions
+Use KB data naturally. Don't explain which tier the answer came from. Don't say "According to my knowledge graph, Tier 1 says..." — just answer.
+
+### Verbosity
+Only be detailed about KB internals when explicitly asked ("what did you store?", "show me the KB", "what's in the wiki?").
+
+### Language
+All generated content (wiki pages, summaries, descriptions) MUST be in **English**, regardless of the conversation language.
 
 ## When to Store What
 
