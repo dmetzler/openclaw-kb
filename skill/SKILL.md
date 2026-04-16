@@ -1,234 +1,191 @@
 ---
 name: openclaw-kb
-description: >
-  Personal knowledge base built on SQLite with a 3-tier architecture:
-  Knowledge Graph (entities + relations with recursive traversal),
-  Data Lake (JSON Schema-validated typed records), and
-  Semantic Search (FTS5 full-text + vec0 vector embeddings).
-  Single-file database (jarvis.db), Obsidian-compatible wiki generation,
-  URL/file ingestion with LLM entity extraction, hybrid search across all tiers,
-  JSONL export/import, and a schema registry for custom data types.
-  Use this skill when working with openclaw-kb: ingesting content, searching,
-  managing KG entities/relations, inserting data lake records, registering schemas,
-  exporting/importing the database, or extending the system.
+description: "3-tier personal knowledge base. ALWAYS use proactively: (1) store facts from conversations (entities + relations in KG), (2) ingest URLs/documents shared by user (create wiki pages + KG entries + embeddings), (3) answer questions by searching KG first, then data lake, then semantic search. Wiki pages are Obsidian-compatible with wikilinks. Use when: any entity (person, org, concept) is mentioned, any URL or document is shared, any question requires recalling stored knowledge. NOT for: ephemeral chat, weather, time queries."
 ---
 
-# OpenClaw KB
+# OpenClaw Knowledge Base
 
-A portable, single-file knowledge base for AI agents. Three tiers unified in one SQLite database (`jarvis.db`).
+3-tier knowledge system: Knowledge Graph (facts) → Data Lake (structured records) → Semantic Search (FTS5 + embeddings). Wiki pages synced to Obsidian via iCloud/Google Drive.
 
 ## Setup
 
 ```bash
-npm install
-node -e "import('./src/db.mjs').then(m => { m.initDatabase(); m.closeDatabase(); })"
+cd ~/kb && node -e "import { initDatabase } from './src/db.mjs'; initDatabase('./jarvis.db');"
 ```
 
-Optional dependencies:
-- **Ollama** with `nomic-embed-text` — vector embeddings (768-dim chunks, 768-dim entities)
-- **Python 3.10+** with `docling` — PDF/DOCX/PPTX ingestion
+Requires: Node.js 18+, `better-sqlite3`, `sqlite-vec`. Optional: Ollama `nomic-embed-text` for embeddings.
 
-## Architecture
+## When to Store What
+
+### Always store in KG (silent, no wiki page):
+- People mentioned by name → entity type `person`
+- Companies/orgs mentioned → entity type `org`
+- Simple factual relations (works_at, knows, located_in...)
+
+### Store in KG + create wiki page when:
+- User explicitly shares a URL or document → **ALWAYS** create source + concept pages
+- User says "remember this", "note this", or shares notable knowledge
+- Entity is a concept, technology, or domain knowledge worth retrieving later
+- Entity is a key person (colleague, expert, author — not casual mentions)
+- A decision with consequences is made
+
+### Never store:
+- Casual greetings, weather/time questions, ephemeral context
+- "I'm in a meeting", "I'll be back" — transient state
+
+### Wiki page threshold:
+The wiki is for the **human** to browse in Obsidian. Don't pollute it with every minor fact. The KG can be rich (many small facts) — the wiki should be curated (only notable items).
+
+## Ingesting URLs and Documents (ASYNC)
+
+Ingestion is slow (fetch + extract + wiki + sync). **Always delegate to a sub-agent**:
 
 ```
-┌────────────────────────────────────────────────────┐
-│  Tier 1: Knowledge Graph     │  Tier 2: Data Lake  │
-│  entities + relations        │  data_records        │
-│  traverseGraph (depth 2)     │  data_sources        │
-│  768-dim entity embeddings   │  data_schemas (AJV)  │
-├──────────────────────────────┴─────────────────────┤
-│  Tier 3: Semantic Search                           │
-│  FTS5 (BM25) + vec0 (768-dim chunk embeddings)     │
-├────────────────────────────────────────────────────┤
-│  jarvis.db (SQLite WAL)  │  wiki/ (Obsidian .md)   │
-└────────────────────────────────────────────────────┘
+User: "Check out https://example.com/article"
+You: "On it — ingesting in background!"
+→ sessions_spawn(task: "Ingest URL into KB", runtime: "subagent")
+→ Sub-agent does the work
+→ You get notified when done
+You: "Done! Added 5 concepts to the wiki."
 ```
 
-**Tier 1 — Knowledge Graph**: Entities with name/type/metadata. Directed relations. Recursive traversal up to depth 2. Best for structured facts and "what is related to X?" queries.
+### Sub-agent ingestion task:
 
-**Tier 2 — Data Lake**: Generic typed records validated against JSON Schema. Six pre-registered types (health_metric, activity, grade, meal, sleep, finance). Extensible via `registerSchema()`. Best for time-series data and typed records.
+The sub-agent should:
+1. Fetch the URL content (use `web_fetch` tool)
+2. Read and understand the content
+3. Identify entities, concepts, relations, and a summary
+4. Call the KB scripts to store everything (see API below)
+5. Sync to iCloud/Google Drive
 
-**Tier 3 — Semantic Search**: FTS5 full-text with BM25 ranking + sqlite-vec cosine similarity on 768-dim chunk embeddings. Auto-embeds via Ollama. Best for "find content about topic Z."
+### For simple facts from conversation:
 
-**Hybrid Search** (`wiki-search.mjs`): Queries all tiers, deduplicates by `source_table:source_id`, ranks by tier priority (KG > Data Lake > Semantic).
-
-## Core Operations
-
-### Ingest
+Do it inline (no sub-agent needed) — it's fast:
 
 ```bash
-# URL → Readability → LLM extraction → chunks → embeddings → wiki pages
-node src/ingest.mjs https://example.com/article
+cd ~/kb && node -e "
+import { initDatabase, createEntity, createRelation, getRelationsFrom, getRelationsTo } from './src/db.mjs';
+import { createPage, regenerateIndex } from './src/wiki.mjs';
+initDatabase('./jarvis.db');
 
-# File (PDF/DOCX/PPTX/MD) → docling → chunks → embeddings → wiki pages
-node src/ingest-file.mjs path/to/document.pdf
+const e1 = createEntity({ name: 'Alice', type: 'person', metadata: { description: 'Engineer at Acme' } });
+const e2 = createEntity({ name: 'Acme Corp', type: 'org', metadata: { description: 'Tech company in NYC' } });
+createRelation({ source_id: e1.id, target_id: e2.id, type: 'works_at' });
+
+// Create wiki pages with relations (only for notable entities)
+for (const e of [e1, e2]) {
+  const rels = [
+    ...getRelationsFrom(e.id).map(r => ({ ...r, direction: 'outgoing' })),
+    ...getRelationsTo(e.id).map(r => ({ ...r, direction: 'incoming' }))
+  ];
+  createPage(
+    { name: e.name, type: e.type, description: JSON.parse(e.metadata).description, attributes: JSON.parse(e.metadata) },
+    'conversation', { wikiDir: './wiki', relations: rels, kgId: e.id }
+  );
+}
+regenerateIndex({ wikiDir: './wiki' });
+"
 ```
 
-Programmatic:
+## Answering Questions (3-Tier Search)
 
-```javascript
-import { initDatabase, closeDatabase } from '../src/db.mjs';
-import { ingestUrl, ingestText } from '../src/ingest.mjs';
-import { ingestFile } from '../src/ingest-file.mjs';
+When a user asks a question that might involve stored knowledge:
 
-initDatabase();
-const result = await ingestUrl('https://example.com', llm);
-// result: { ok, rawFile, pagesCreated, pagesUpdated, entitiesCreated, relationsCreated, chunks }
-closeDatabase();
+### Step 1: Extract entities from the question
+You ARE the NER engine. Identify people, orgs, concepts, technologies mentioned in the question.
+
+### Step 2: Search Tier 1 — Knowledge Graph (HIGHEST PRIORITY)
+```bash
+cd ~/kb && node -e "
+import { initDatabase } from './src/db.mjs';
+import { searchKG } from './src/wiki-search.mjs';
+initDatabase('./jarvis.db');
+const results = searchKG('entity name');
+console.log(JSON.stringify(results, null, 2));
+"
+```
+If T1 has facts → **use them**. They are verified atomic facts. Do NOT override with T2 or T3.
+
+### Step 3: Search Tier 2 — Data Lake (if T1 incomplete)
+```bash
+cd ~/kb && node -e "
+import { initDatabase, queryRecords } from './src/db.mjs';
+initDatabase('./jarvis.db');
+const results = queryRecords('health_metric', { from: '2026-01-01', to: '2026-04-16' });
+console.log(JSON.stringify(results, null, 2));
+"
+```
+Use SQL-style filters (record_type, date range). Good for metrics, stats, time-series.
+
+### Step 4: Search Tier 3 — Semantic Search (FALLBACK only)
+```bash
+cd ~/kb && node -e "
+import { initDatabase } from './src/db.mjs';
+import { searchSemantic } from './src/wiki-search.mjs';
+initDatabase('./jarvis.db');
+const results = await searchSemantic('search query');
+console.log(JSON.stringify(results, null, 2));
+"
+```
+FTS5 + vector embeddings. Auto-embeds the query via Ollama. Good for fuzzy/conceptual queries.
+
+### Priority Rules (CRITICAL):
+1. **T1 facts are absolute** — if the KG says "Alice works at Acme", that's the answer
+2. **T2 data supplements T1** — use for stats/metrics. If T2 contradicts T1, T1 wins
+3. **T3 semantic is fallback** — use only when T1+T2 don't have the answer. NEVER let T3 contradict T1
+
+### Unified search (queries all 3 tiers at once):
+```bash
+cd ~/kb && node -e "
+import { initDatabase } from './src/db.mjs';
+import { search } from './src/wiki-search.mjs';
+initDatabase('./jarvis.db');
+const results = await search('query', { maxResults: 10, includeScores: true });
+console.log(JSON.stringify(results, null, 2));
+"
 ```
 
-The ingestion pipeline: fetch/convert → archive to `raw/` → LLM entity extraction (Zod-validated) → create wiki pages in `wiki/` → create KG entities + relations → chunk content → embed via Ollama → store in DB.
+## Wiki Generation Rules
 
-### Search
+- Pages go in: `wiki/entities/`, `wiki/concepts/`, `wiki/topics/`, `wiki/sources/`
+- NEVER put files at wiki root
+- Filenames: lowercase, hyphens, keep accents (é, è, ç), no spaces
+- All pages MUST use `createPage()` from `src/wiki.mjs` — never write manually
+- Always call `regenerateIndex()` after creating/updating pages
+- Language: **English** for all generated content
+- Links: Obsidian wikilinks `[[slug|Display Name]]`
+
+### Entity types:
+`person`, `org`, `place`, `device`, `service`, `project`, `concept`, `knowledge`, `event`, `media`, `product`, `topic`
+
+### Relation types:
+`works_at`, `worked_at`, `owns`, `uses`, `created`, `related_to`, `part_of`, `knows`, `located_in`, `manages`, `member_of`, `depends_on`, `likes`, `references`, `covers`, `contrasts_with`, `inspired_by`, `authored`
+
+## Syncing to Obsidian (after every wiki change)
 
 ```bash
-node src/wiki-search.mjs "your query"
+rclone copy ~/kb/wiki/ icloud:Obsidian/VAULT_NAME/wiki/ --transfers 1
+rclone copy ~/kb/raw/ icloud:Obsidian/VAULT_NAME/raw/ --transfers 1
 ```
 
-```javascript
-import { search, searchKG, searchData, searchSemantic } from '../src/wiki-search.mjs';
-
-// Unified cross-tier search
-const results = await search('Node.js', { maxResults: 10, tiers: [1, 2, 3], includeScores: true });
-
-// Tier-specific
-const kgResults = searchKG('Acme Corp');           // Tier 1 only
-const dataResults = searchData('weight', 'health_metric');  // Tier 2, filtered by type
-const semResults = await searchSemantic('machine learning'); // Tier 3 (FTS5 + vector)
-```
-
-### Knowledge Graph CRUD
-
-```javascript
-import {
-  createEntity, getEntity, updateEntity, deleteEntity,
-  createRelation, getRelationsFrom, getRelationsTo, deleteRelation,
-  traverseGraph,
-  upsertEmbedding, findNearestVectors,
-} from '../src/db.mjs';
-
-const alice = createEntity({ name: 'Alice', type: 'person', metadata: { role: 'engineer' } });
-const acme = createEntity({ name: 'Acme Corp', type: 'organization' });
-createRelation({ source_id: alice.id, target_id: acme.id, type: 'works_at' });
-
-const graph = traverseGraph(alice.id, 2);  // depth-2 traversal
-```
-
-### Data Lake Records
-
-```javascript
-import {
-  createDataSource, insertRecord, queryRecords,
-  registerSchema, validateRecord, listSchemas,
-} from '../src/db.mjs';
-
-const src = createDataSource({ name: 'fitbit', type: 'api' });
-insertRecord('health_metric', {
-  source_id: src.id,
-  metric_type: 'weight', value: 80, unit: 'kg',
-  recorded_at: '2026-04-14T10:00:00Z',
-});
-
-const records = queryRecords('health_metric', {
-  source_id: src.id, from: '2026-04-01', to: '2026-04-30', limit: 50,
-});
-```
-
-See [schema-registry.md](references/schema-registry.md) for pre-registered types and custom schema registration.
-
-### Export / Import
+## Checking existing knowledge
 
 ```bash
-node src/kb-export.mjs ./backup
-node src/kb-import.mjs ./backup --db new-kb.db
+cd ~/kb && node -e "
+import { initDatabase } from './src/db.mjs';
+const db = initDatabase('./jarvis.db');
+db.prepare('SELECT id, name, type FROM entities ORDER BY name').all().forEach(e => console.log(e.id, e.type, e.name));
+"
 ```
 
-```javascript
-import { exportDatabase } from '../src/kb-export.mjs';
-import { importDatabase } from '../src/kb-import.mjs';
-
-exportDatabase('./backup');                         // JSONL flat files
-importDatabase('./backup', 'new-kb.db');            // into fresh DB
-```
-
-### KG Migration (legacy)
-
-```bash
-node src/kg-migrate.mjs --dry-run kg-store.json
-node src/kg-migrate.mjs kg-store.json
-```
-
-```javascript
-import { migrateKnowledgeGraph } from '../src/kg-migrate.mjs';
-const stats = migrateKnowledgeGraph('kg-store.json', 'jarvis.db', { dryRun: false });
-```
-
-### Wiki Operations
-
-```javascript
-import { createPage, updatePage, findPage, readPage, regenerateIndex, appendLog } from '../src/wiki.mjs';
-
-const page = createPage(entity, rawFile, { wikiDir: 'wiki' });
-regenerateIndex({ wikiDir: 'wiki' });
-```
-
-Wiki pages live in `wiki/{entities,concepts,topics,comparisons}/` with YAML frontmatter and wikilinks. The index at `wiki/index.md` is auto-regenerated. Operations are logged to `wiki/log.md`.
-
-### Backfill (chunks + embeddings for existing pages)
-
-```bash
-node src/backfill.mjs [--wiki-dir wiki] [--db jarvis.db]
-```
-
-### Schema Registry CLI
-
-```bash
-node src/schema-registry.mjs list
-node src/schema-registry.mjs get health_metric
-node src/schema-registry.mjs register schema.json
-node src/schema-registry.mjs validate health_metric data.json
-```
-
-## When to Use What
-
-| Task | Module | Function |
-|------|--------|----------|
-| Add a URL to the KB | `ingest.mjs` | `ingestUrl(url, llm)` |
-| Add a PDF/DOCX | `ingest-file.mjs` | `ingestFile(path, llm)` |
-| Search everything | `wiki-search.mjs` | `search(query, opts)` |
-| Search KG only | `wiki-search.mjs` | `searchKG(query)` |
-| Search data records | `wiki-search.mjs` | `searchData(query, type?)` |
-| Semantic/vector search | `wiki-search.mjs` | `searchSemantic(query)` |
-| Create entity | `db.mjs` | `createEntity({name, type, metadata?})` |
-| Create relation | `db.mjs` | `createRelation({source_id, target_id, type})` |
-| Traverse KG | `db.mjs` | `traverseGraph(entityId, depth)` |
-| Insert data record | `db.mjs` | `insertRecord(type, data)` |
-| Query data records | `db.mjs` | `queryRecords(type, filters?)` |
-| Register schema | `db.mjs` | `registerSchema(type, label, desc, schema, example)` |
-| Validate data | `db.mjs` | `validateRecord(type, data)` |
-| Export database | `kb-export.mjs` | `exportDatabase(dir)` |
-| Import database | `kb-import.mjs` | `importDatabase(dir, dbPath)` |
-| Migrate legacy KG | `kg-migrate.mjs` | `migrateKnowledgeGraph(file, dbPath)` |
-| Create wiki page | `wiki.mjs` | `createPage(entity, rawFile)` |
-| Embed text | `embedder.mjs` | `embed(text)` / `embedBatch(texts)` |
-| Chunk markdown | `chunker.mjs` | `chunkMarkdown(md, opts)` |
-| Fetch URL content | `fetcher.mjs` | `fetchUrl(url)` |
-| Extract entities (LLM) | `extractor.mjs` | `extract(text, llm)` |
-| Convert document | `converter.mjs` | `convertDocument(filePath)` |
-
-## Key Constants
-
-| Constant | Value | Location |
-|----------|-------|----------|
-| Entity embedding dims | 768 | `db.mjs` `EMBEDDING_DIMENSIONS` |
-| Chunk embedding dims | 768 | `db.mjs` `CHUNK_EMBEDDING_DIMENSIONS` |
-| Ollama model | `nomic-embed-text` | `embedder.mjs` |
-| Default max search results | 20 | `wiki-search.mjs` |
-| FTS5 prefix config | `'2 3'` | `schema.sql` |
-| Max traversal depth | 2 | convention |
+## Performance Tips
+- Batch entity creations in ONE script call
+- `regenerateIndex` once at the end, not per page
+- Sync to iCloud/Drive once at the end
+- Use sub-agents for URL/document ingestion (slow operations)
+- For simple facts, store inline (fast)
 
 ## References
 
-- [API Quick Reference](references/api-quick-ref.md) — all exported functions with signatures
-- [Schema Registry](references/schema-registry.md) — pre-registered types and custom schema registration
-- Source: `../src/db.mjs`, `../src/wiki-search.mjs`, `../src/ingest.mjs`, `../src/ingest-file.mjs`
+- [Schema Registry](references/schema-registry.md) — register custom data types
+- [API Quick Reference](references/api-quick-ref.md) — all exported functions

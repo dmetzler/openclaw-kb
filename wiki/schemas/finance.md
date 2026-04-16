@@ -2,8 +2,8 @@
 type: schema
 record_type: finance
 label: Finance
-created_at: '2026-04-15 11:29:13'
-updated_at: '2026-04-15 11:29:13'
+created_at: '2026-04-15 16:29:19'
+updated_at: '2026-04-15 16:29:19'
 ---
 
 # Finance
