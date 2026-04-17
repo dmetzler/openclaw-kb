@@ -15,6 +15,57 @@ cd ~/kb && npm install && node -e "import { initDatabase } from './src/db.mjs'; 
 
 Requires: Node.js 18+, `better-sqlite3`, `sqlite-vec`. Optional: Ollama `nomic-embed-text` for embeddings.
 
+
+## CLI Quick Reference
+
+All KB operations go through `node src/cli.mjs` (alias `kb`). One process, fast dispatch.
+
+```bash
+cd ~/kb
+
+# Entities
+node src/cli.mjs add-entity "Damien Metzler" person "Software architect"
+node src/cli.mjs add-entity "Hyland" org "Software vendor, Westlake Ohio"
+node src/cli.mjs find-entity "Damien"
+node src/cli.mjs list-entities
+
+# Relations
+node src/cli.mjs add-relation "Damien Metzler" "Hyland" works_at
+
+# Wiki pages
+node src/cli.mjs create-page --all    # regenerate all pages with relations
+node src/cli.mjs regen-index           # rebuild index.md
+
+# Raw sources (for URLs)
+node src/cli.mjs ingest-raw "Article Title" "https://url.com" "Summary of the article here"
+
+# Search
+node src/cli.mjs search "kubernetes"
+node src/cli.mjs search-kg "Damien"
+
+# Sync to Obsidian
+node src/cli.mjs sync icloud:Obsidian/VaultName
+
+# Stats
+node src/cli.mjs stats
+```
+
+### Batch mode (FASTEST — use this for multiple operations)
+
+Pipe commands to stdin. ONE Node.js process for ALL operations:
+
+```bash
+cd ~/kb && echo '
+add-entity "Alice" person "Engineer"
+add-entity "Acme" org "Tech company"
+add-relation Alice Acme works_at
+create-page --all
+regen-index
+' | node src/cli.mjs batch
+```
+
+**Always prefer batch mode** when creating multiple entities/relations. It's 100x faster than separate commands.
+
 ## Agent Behavior Rules
 
 ### Silent storage
