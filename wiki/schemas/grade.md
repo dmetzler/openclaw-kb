@@ -2,8 +2,8 @@
 type: schema
 record_type: grade
 label: Grade
-created_at: '2026-04-15 16:29:19'
-updated_at: '2026-04-15 16:29:19'
+created_at: '2026-04-15 17:37:38'
+updated_at: '2026-04-15 17:37:38'
 ---
 
 # Grade

@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "SQLite database abstraction layer for OpenClaw knowledge base",
   "main": "src/db.mjs",
+  "bin": {
+    "kb": "src/cli.mjs"
+  },
   "scripts": {
     "test": "vitest run",
     "docs:serve": "mkdocs serve",
