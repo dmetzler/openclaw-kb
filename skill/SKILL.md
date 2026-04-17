@@ -17,22 +17,20 @@ Requires: Node.js 18+, `better-sqlite3`, `sqlite-vec`. Optional: Ollama `nomic-e
 
 ## Agent Behavior Rules
 
-These rules define HOW the agent should use the KB in conversations. They are part of the skill, not the agent's personality.
-
 ### Silent storage
-When you detect facts in conversation (names, companies, relationships), store them in the KG **without announcing it**. Don't say "I'm storing this in the knowledge base" every time. The user doesn't need to know about every INSERT.
+When you detect facts in conversation (names, companies, relationships), store them in the KG **without announcing it**. Don't say "I'm storing this in the knowledge base" every time.
 
 ### URL/Document ingestion
-When the user shares a URL or document, acknowledge briefly ("Got it, ingesting now!") and report back when done with a **short summary** of what was captured (e.g. "Added 5 entities and 3 concepts"). Delegate to a sub-agent if available.
+When the user shares a URL or document, acknowledge briefly ("Got it, ingesting now!") then delegate to a sub-agent. Report back when done with a **short summary** (e.g. "Added 5 entities and 3 concepts to the wiki.").
 
 ### Answering questions
-Use KB data naturally. Don't explain which tier the answer came from. Don't say "According to my knowledge graph, Tier 1 says..." — just answer.
+Use KB data naturally. Don't explain which tier the answer came from.
 
 ### Verbosity
-Only be detailed about KB internals when explicitly asked ("what did you store?", "show me the KB", "what's in the wiki?").
+Only be detailed about KB internals when explicitly asked.
 
 ### Language
-All generated content (wiki pages, summaries, descriptions) MUST be in **English**, regardless of the conversation language.
+All generated content (wiki pages, summaries, descriptions) MUST be in **English**.
 
 ## When to Store What
 
@@ -46,72 +44,141 @@ All generated content (wiki pages, summaries, descriptions) MUST be in **English
 - User says "remember this", "note this", or shares notable knowledge
 - Entity is a concept, technology, or domain knowledge worth retrieving later
 - Entity is a key person (colleague, expert, author — not casual mentions)
-- A decision with consequences is made
 
 ### Never store:
 - Casual greetings, weather/time questions, ephemeral context
-- "I'm in a meeting", "I'll be back" — transient state
 
-### Wiki page threshold:
-The wiki is for the **human** to browse in Obsidian. Don't pollute it with every minor fact. The KG can be rich (many small facts) — the wiki should be curated (only notable items).
+## CRITICAL: URL Ingestion Workflow
 
-## Ingesting URLs and Documents (ASYNC)
+When a user shares a URL, follow this EXACT workflow. Do NOT skip steps.
 
-Ingestion is slow (fetch + extract + wiki + sync). **Always delegate to a sub-agent**:
+### Step 1: Acknowledge
+Reply briefly: "Got it, ingesting now!"
 
+### Step 2: Fetch the content
+Use `web_fetch` to get the article content.
+
+### Step 3: Build ONE batch script
+Create a SINGLE `node -e` script that does EVERYTHING in one call. NEVER run separate scripts for each entity. This is the #1 performance rule.
+
+```bash
+cd ~/kb && node -e "
+import { initDatabase, createEntity, createRelation, getRelationsFrom, getRelationsTo } from './src/db.mjs';
+import { createPage, regenerateIndex } from './src/wiki.mjs';
+import { writeFileSync, mkdirSync } from 'fs';
+initDatabase('./jarvis.db');
+const db = initDatabase('./jarvis.db');
+
+// === RAW SOURCE (MANDATORY) ===
+mkdirSync('./raw', { recursive: true });
+const today = new Date().toISOString().slice(0, 10);
+const slug = 'article-slug-here';
+const rawFilename = today + '-' + slug + '.md';
+writeFileSync('./raw/' + rawFilename, [
+  '---',
+  'title: \"Article Title\"',
+  'source: \"https://original-url.com\"',
+  'date: ' + today,
+  'author: \"Author Name\"',
+  'ingested: ' + new Date().toISOString(),
+  'tags: [knowledge]',
+  '---',
+  '',
+  '# Article Title',
+  '',
+  'Source: https://original-url.com',
+  '',
+  '## Summary',
+  '',
+  'YOUR SUMMARY OF THE ARTICLE HERE (2-3 paragraphs)',
+  ''
+].join('\n'));
+
+// === ENTITIES (check for duplicates first!) ===
+function findOrCreate(name, type, description) {
+  const existing = db.prepare('SELECT * FROM entities WHERE name = ?').get(name);
+  if (existing) return { ...existing, metadata: JSON.parse(existing.metadata) };
+  return createEntity({ name, type, metadata: { description } });
+}
+
+const e1 = findOrCreate('Entity Name', 'concept', 'Description here');
+const e2 = findOrCreate('Another Entity', 'person', 'Description here');
+// ... more entities
+
+// === RELATIONS ===
+function safeRelation(sourceId, targetId, type) {
+  if (sourceId === targetId) return;
+  try { createRelation({ source_id: sourceId, target_id: targetId, type }); } catch(e) {}
+}
+safeRelation(e1.id, e2.id, 'related_to');
+
+// === WIKI PAGES (only for notable entities) ===
+function makePage(entity) {
+  const meta = typeof entity.metadata === 'string' ? JSON.parse(entity.metadata) : entity.metadata;
+  const rels = [
+    ...getRelationsFrom(entity.id).map(r => ({ ...r, direction: 'outgoing' })),
+    ...getRelationsTo(entity.id).map(r => ({ ...r, direction: 'incoming' }))
+  ];
+  createPage(
+    { name: entity.name, type: entity.type, description: meta.description || '', attributes: meta },
+    rawFilename,
+    { wikiDir: './wiki', relations: rels, kgId: entity.id }
+  );
+}
+makePage(e1);
+makePage(e2);
+
+regenerateIndex({ wikiDir: './wiki' });
+console.log('Done: X entities, Y relations, Z pages');
+"
 ```
-User: "Check out https://example.com/article"
-You: "On it — ingesting in background!"
-→ sessions_spawn(task: "Ingest URL into KB", runtime: "subagent")
-→ Sub-agent does the work
-→ You get notified when done
-You: "Done! Added 5 concepts to the wiki."
+
+### Step 4: Sync to Obsidian
+```bash
+rclone copy ~/kb/wiki/ icloud:Obsidian/VAULT_NAME/wiki/ --transfers 1
+rclone copy ~/kb/raw/ icloud:Obsidian/VAULT_NAME/raw/ --transfers 1
 ```
 
-### Sub-agent ingestion task:
+### CRITICAL RULES for URL ingestion:
+- **raw/ is MANDATORY** — every URL must create a raw/YYYY-MM-DD-slug.md file with frontmatter + summary
+- **One script, one exec** — batch ALL entities, relations, and pages in a single `node -e` call
+- **Check duplicates** — use `findOrCreate` pattern, never blind `createEntity`
+- **Source reference** — pass `rawFilename` as the source parameter to `createPage`
+- The raw/ file should contain a **summary** of the article (not the full HTML dump), the source URL, and metadata
 
-The sub-agent should:
-1. Fetch the URL content (use `web_fetch` tool)
-2. Read and understand the content
-3. Identify entities, concepts, relations, and a summary
-4. Call the KB scripts to store everything (see API below)
-5. Sync to iCloud/Google Drive
+## Conversational Facts (inline, no sub-agent)
 
-### For simple facts from conversation:
-
-Do it inline (no sub-agent needed) — it's fast:
+For simple facts from conversation, batch in one script:
 
 ```bash
 cd ~/kb && node -e "
 import { initDatabase, createEntity, createRelation, getRelationsFrom, getRelationsTo } from './src/db.mjs';
 import { createPage, regenerateIndex } from './src/wiki.mjs';
 initDatabase('./jarvis.db');
+const db = initDatabase('./jarvis.db');
 
-const e1 = createEntity({ name: 'Alice', type: 'person', metadata: { description: 'Engineer at Acme' } });
-const e2 = createEntity({ name: 'Acme Corp', type: 'org', metadata: { description: 'Tech company in NYC' } });
-createRelation({ source_id: e1.id, target_id: e2.id, type: 'works_at' });
-
-// Create wiki pages with relations (only for notable entities)
-for (const e of [e1, e2]) {
-  const rels = [
-    ...getRelationsFrom(e.id).map(r => ({ ...r, direction: 'outgoing' })),
-    ...getRelationsTo(e.id).map(r => ({ ...r, direction: 'incoming' }))
-  ];
-  createPage(
-    { name: e.name, type: e.type, description: JSON.parse(e.metadata).description, attributes: JSON.parse(e.metadata) },
-    'conversation', { wikiDir: './wiki', relations: rels, kgId: e.id }
-  );
+function findOrCreate(name, type, description) {
+  const existing = db.prepare('SELECT * FROM entities WHERE name = ?').get(name);
+  if (existing) return { ...existing, metadata: JSON.parse(existing.metadata) };
+  return createEntity({ name, type, metadata: { description } });
 }
-regenerateIndex({ wikiDir: './wiki' });
+
+function safeRelation(s, t, type) { if (s !== t) try { createRelation({ source_id: s, target_id: t, type }); } catch(e) {} }
+
+const e1 = findOrCreate('Damien Metzler', 'person', 'Software architect');
+const e2 = findOrCreate('Hyland', 'org', 'Software vendor in Westlake, Ohio');
+safeRelation(e1.id, e2.id, 'works_at');
+
+// Only create wiki pages for notable entities
+// regenerateIndex({ wikiDir: './wiki' });
+console.log('Stored');
 "
 ```
 
 ## Answering Questions (3-Tier Search)
 
-When a user asks a question that might involve stored knowledge:
-
 ### Step 1: Extract entities from the question
-You ARE the NER engine. Identify people, orgs, concepts, technologies mentioned in the question.
+You ARE the NER engine. Identify people, orgs, concepts mentioned.
 
 ### Step 2: Search Tier 1 — Knowledge Graph (HIGHEST PRIORITY)
 ```bash
@@ -119,76 +186,43 @@ cd ~/kb && node -e "
 import { initDatabase } from './src/db.mjs';
 import { searchKG } from './src/wiki-search.mjs';
 initDatabase('./jarvis.db');
-const results = searchKG('entity name');
-console.log(JSON.stringify(results, null, 2));
+console.log(JSON.stringify(searchKG('entity name'), null, 2));
 "
 ```
-If T1 has facts → **use them**. They are verified atomic facts. Do NOT override with T2 or T3.
+If T1 has facts → **use them**. Do NOT override with T2 or T3.
 
 ### Step 3: Search Tier 2 — Data Lake (if T1 incomplete)
 ```bash
 cd ~/kb && node -e "
 import { initDatabase, queryRecords } from './src/db.mjs';
 initDatabase('./jarvis.db');
-const results = queryRecords('health_metric', { from: '2026-01-01', to: '2026-04-16' });
-console.log(JSON.stringify(results, null, 2));
+console.log(JSON.stringify(queryRecords('record_type', { from: '2026-01-01' }), null, 2));
 "
 ```
-Use SQL-style filters (record_type, date range). Good for metrics, stats, time-series.
 
-### Step 4: Search Tier 3 — Semantic Search (FALLBACK only)
+### Step 4: Search Tier 3 — Semantic (FALLBACK only)
 ```bash
 cd ~/kb && node -e "
 import { initDatabase } from './src/db.mjs';
 import { searchSemantic } from './src/wiki-search.mjs';
 initDatabase('./jarvis.db');
-const results = await searchSemantic('search query');
-console.log(JSON.stringify(results, null, 2));
-"
-```
-FTS5 + vector embeddings. Auto-embeds the query via Ollama. Good for fuzzy/conceptual queries.
-
-### Priority Rules (CRITICAL):
-1. **T1 facts are absolute** — if the KG says "Alice works at Acme", that's the answer
-2. **T2 data supplements T1** — use for stats/metrics. If T2 contradicts T1, T1 wins
-3. **T3 semantic is fallback** — use only when T1+T2 don't have the answer. NEVER let T3 contradict T1
-
-### Unified search (queries all 3 tiers at once):
-```bash
-cd ~/kb && node -e "
-import { initDatabase } from './src/db.mjs';
-import { search } from './src/wiki-search.mjs';
-initDatabase('./jarvis.db');
-const results = await search('query', { maxResults: 10, includeScores: true });
-console.log(JSON.stringify(results, null, 2));
+const r = await searchSemantic('query');
+console.log(JSON.stringify(r, null, 2));
 "
 ```
 
-## Wiki Generation Rules
+### Priority Rules: T1 facts > T2 data > T3 semantic. NEVER let T3 contradict T1.
 
-- Pages go in: `wiki/entities/`, `wiki/concepts/`, `wiki/topics/`, `wiki/sources/`
-- NEVER put files at wiki root
-- Filenames: lowercase, hyphens, keep accents (é, è, ç), no spaces
-- All pages MUST use `createPage()` from `src/wiki.mjs` — never write manually
-- Always call `regenerateIndex()` after creating/updating pages
-- Language: **English** for all generated content
-- Links: Obsidian wikilinks `[[slug|Display Name]]`
+## Wiki Rules
+- Pages in: `wiki/entities/`, `wiki/concepts/`, `wiki/topics/`, `wiki/sources/`
+- NEVER at wiki root
+- Filenames: lowercase, hyphens, keep accents, no spaces
+- Always use `createPage()` — never write files manually
+- Always `regenerateIndex()` after batch
+- Entity types: `person`, `org`, `place`, `concept`, `knowledge`, `event`, `media`, `product`, `project`, `topic`
+- Relation types: `works_at`, `worked_at`, `owns`, `uses`, `created`, `related_to`, `part_of`, `knows`, `located_in`, `manages`, `member_of`, `depends_on`, `likes`, `references`, `covers`, `contrasts_with`, `inspired_by`, `authored`
 
-### Entity types:
-`person`, `org`, `place`, `device`, `service`, `project`, `concept`, `knowledge`, `event`, `media`, `product`, `topic`
-
-### Relation types:
-`works_at`, `worked_at`, `owns`, `uses`, `created`, `related_to`, `part_of`, `knows`, `located_in`, `manages`, `member_of`, `depends_on`, `likes`, `references`, `covers`, `contrasts_with`, `inspired_by`, `authored`
-
-## Syncing to Obsidian (after every wiki change)
-
-```bash
-rclone copy ~/kb/wiki/ icloud:Obsidian/VAULT_NAME/wiki/ --transfers 1
-rclone copy ~/kb/raw/ icloud:Obsidian/VAULT_NAME/raw/ --transfers 1
-```
-
-## Checking existing knowledge
-
+## Check existing knowledge
 ```bash
 cd ~/kb && node -e "
 import { initDatabase } from './src/db.mjs';
@@ -197,14 +231,6 @@ db.prepare('SELECT id, name, type FROM entities ORDER BY name').all().forEach(e 
 "
 ```
 
-## Performance Tips
-- Batch entity creations in ONE script call
-- `regenerateIndex` once at the end, not per page
-- Sync to iCloud/Drive once at the end
-- Use sub-agents for URL/document ingestion (slow operations)
-- For simple facts, store inline (fast)
-
 ## References
-
 - [Schema Registry](references/schema-registry.md) — register custom data types
 - [API Quick Reference](references/api-quick-ref.md) — all exported functions
